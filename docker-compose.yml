@@ -1,0 +1,23 @@
+FROM python:3.8.12-buster
+
+WORKDIR /home/user
+
+# install as a package
+COPY requirements.txt README.md /home/user/
+RUN pip install -r requirements.txt
+RUN python -m spacy download en_core_web_sm
+
+# copy saved models
+COPY models /home/user/models
+
+ENV PYTORCH_TRANSFORMERS_CACHE=/home/user/models
+ENV TOKENIZERS_PARALLELISM=false
+
+# Copy REST API code
+COPY rest_api /home/user/rest_api
+
+EXPOSE 8000
+
+
+# cmd for running the API
+CMD ["gunicorn", "rest_api.application:app",  "-b", "0.0.0.0", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1", "--timeout", "2000"]

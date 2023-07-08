@@ -76,8 +76,11 @@ def create_survey_meta_insert_request(db: Session, org_id: str, survey_id: str, 
     :return:
     """
     create_object = SurvMetaInsReqCreate(orgId=org_id, surveyId=survey_id, metaKey=meta_key, metaValue=meta_value)
-    survey_meta_ins_req = crud.survey_meta_insert_request.create(db=db, obj_in=create_object)
-    return survey_meta_ins_req.id
+    try : 
+        survey_meta_ins_req = crud.survey_meta_insert_request.create(db=db, obj_in=create_object)
+        return survey_meta_ins_req.id
+    except Exception as e:
+        logger.error(f"{survey_id}: storing in db failed")
 
 def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
                                        meta_value: str = None):
@@ -93,8 +96,11 @@ def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, 
     db_obj = crud.survey_meta_update_request.get_meta(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
     # db_obj = crud.survey_meta_update_request.get(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
     update_object = SurvMetaUpReqCreate(orgId=org_id, surveyId=survey_id, metaKey=meta_key, metaValue=meta_value)
-    survey_meta_up_req = crud.survey_meta_update_request.update(db=db, db_obj= db_obj, obj_in=update_object)
-    return survey_meta_up_req.id
+    try :
+        survey_meta_up_req = crud.survey_meta_update_request.update(db=db, db_obj= db_obj, obj_in=update_object)
+        return survey_meta_up_req.id
+    except Exception as e:
+        logger.error(f"{survey_id}: storing in db failed")
 
 def check_if_meta_exist(db:Session, org : Organization):
     org_id = org.orgId    #entity

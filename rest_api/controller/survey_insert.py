@@ -1,9 +1,9 @@
 from typing import Union, List, Optional, Dict, Generator
 from rest_api.config import S3_ACCESS_KEY_ID,S3_BUCKET,S3_SECRET_KEY,AWS_REGION_VALUE
-from rest_api.queue.sqs_queue import SQSQueue
 from rest_api.config import MCQ_INDEXING_QUEUE, S3_ACCESS_KEY_ID, S3_SECRET_KEY, MESSAGE_CHUNKS, LOG_LEVEL
 from rest_api.request.request import Organization
-from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate
+from rest_api.db.models.survey_insert_request import SurveyInsertRequest, SurveyMetaInsertRequest
+from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, SurvMetaUpReqCreate
 from rest_api.controller.utils import write_files_to_s3
 import logging
 import pandas as pd
@@ -40,7 +40,7 @@ def check_if_meta_of_survey_id_exist(db , org_id :str, survey_id : str, meta_key
     :return:
     """
 
-    if crud.survey_insert_request.get_id(db=db, org_id=org_id, survey_id=survey_id):
+    if crud.survey_meta_insert_request.get_meta_id(db=db, org_id=org_id, survey_id=survey_id , meta_key = meta_key):
         return True
     else:
         return False
@@ -79,6 +79,53 @@ def create_survey_meta_insert_request(db: Session, org_id: str, survey_id: str, 
     survey_meta_ins_req = crud.survey_meta_insert_request.create(db=db, obj_in=create_object)
     return survey_meta_ins_req.id
 
+def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
+                                       meta_value: str = None):
+    """
+
+    :param survey:
+    :param survey_id:
+    :param file_path:
+    :param org_id:
+    :param db:
+    :return:
+    """
+    db_obj = crud.survey_meta_update_request.get_meta(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
+    # db_obj = crud.survey_meta_update_request.get(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
+    update_object = SurvMetaUpReqCreate(orgId=org_id, surveyId=survey_id, metaKey=meta_key, metaValue=meta_value)
+    survey_meta_up_req = crud.survey_meta_update_request.update(db=db, db_obj= db_obj, obj_in=update_object)
+    return survey_meta_up_req.id
+
+def check_if_meta_exist(db:Session, org : Organization):
+    org_id = org.orgId    #entity
+    surveyList = org.surveyList
+    meta_insert_list = []
+    meta_update_list = []
+    failed_surv = []
+    success_surv = []
+    for survey in surveyList:
+        meta_dict = {}
+        survey_id = survey.surveyId     #entity
+        #store meta in dictionary
+        meta_data = survey.metaData
+        print(meta_data)
+        for m in meta_data:
+            meta_dict = {}
+            meta_key = m.metaKey
+            try:
+                if check_if_meta_of_survey_id_exist(db , org_id , survey_id, meta_key):
+                    meta_dict = {"orgId": org_id, "surveyId": survey_id, "metaKey" : m.metaKey ,"metaValue" : m.value }
+                    meta_update_list.append(meta_dict)
+                else:
+                    meta_dict = {"orgId": org_id, "surveyId": survey_id, "metaKey" : m.metaKey ,"metaValue" : m.value }
+                    meta_insert_list.append(meta_dict)
+                success_surv.append({"id": survey_id})
+            except Exception as e:
+                failed_surv.append({"id": survey_id})
+                logger.error(f"{survey_id}: storing in s3 failed")
+
+        return (meta_insert_list, meta_update_list , success_surv, failed_surv)
+
 def add_csv_to_s3(org : Organization, db:Session):
     now = datetime.now()
     date = now.strftime("%d-%m-%Y")
@@ -101,7 +148,7 @@ def add_csv_to_s3(org : Organization, db:Session):
         survey_description = survey.surveyDescription       #entity
         #store meta in dictionary
         meta_data = survey.metaData
-        print(meta_data)
+        # print(meta_data)
         for m in meta_data:
             meta_dict = {}
             meta_dict = {"orgId": org_id, "surveyId": survey_id, "metaKey" : m.metaKey ,"metaValue" : m.value }

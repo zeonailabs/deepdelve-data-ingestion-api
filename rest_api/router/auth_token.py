@@ -9,7 +9,7 @@ from jose import JWTError, jwt
 
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from rest_api.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, CALLBACK_API_KEY
+from rest_api.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 

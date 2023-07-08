@@ -22,3 +22,5 @@ class InsertAPIResponse(BaseModel):
 class UpdateAPIResponse(BaseModel):
     status: StatusObj
     message: str
+    successSurveyIds: List[Dict]
+    failedSurveyIds: List[Dict]

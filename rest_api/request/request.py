@@ -37,6 +37,14 @@ class Survey(BaseModel):
     surveyData: List[SurveyData]
 
 
+class SurveyMeta(BaseModel):
+    surveyId: str
+    metaData: List[MetaData]
+
 class Organization(BaseModel):
     orgId: str
     surveyList: List[Survey]
+
+class OrganizationMeta(BaseModel):
+    orgId: str
+    surveyList: List[SurveyMeta]

@@ -1,10 +1,10 @@
 from typing import Generator
 
-from rest_api.db.db.session import SessionLocal2
+from rest_api.db.db.session import SessionLocal
 
 
 def get_db() -> Generator:
-    db = SessionLocal2()
+    db = SessionLocal()
     db.current_user_id = None
     try:
         yield db

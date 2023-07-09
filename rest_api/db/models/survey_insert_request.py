@@ -18,6 +18,7 @@ class SurveyInsertRequest(ORMBase):
         uselist=True,
     )
 
+
 class SurveyMetaInsertRequest(ORMBase):
     __tablename__ = "surveyMetaData"
 
@@ -37,5 +38,3 @@ class SurveyMetaInsertRequest(ORMBase):
         ),
         {},
     )  # type: ignore
-
-    

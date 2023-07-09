@@ -12,6 +12,7 @@ class SurveyInsertRequest(ORMBase):
     s3_file_path = Column(String(1024), nullable=True)
     surveyDescription = Column(String(1024), nullable=True)
 
+
 class SurveyMetaInsertRequest(ORMBase):
     __tablename__ = "surveyMetaData"
 
@@ -19,4 +20,3 @@ class SurveyMetaInsertRequest(ORMBase):
     surveyId = Column(String(256), nullable=False)
     metaKey = Column(String(1024), nullable=True)
     metaValue = Column(String(1024), nullable=True)
-    

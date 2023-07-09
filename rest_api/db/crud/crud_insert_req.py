@@ -16,6 +16,7 @@ class CRUDSurvInsReq(CRUDBase[SurveyInsertRequest, SurvInsReqCreate, SurvUpReqCr
 
 survey_insert_request = CRUDSurvInsReq(SurveyInsertRequest)
 survey_update_request = CRUDSurvInsReq(SurveyInsertRequest)
+survey_delete_request = CRUDSurvInsReq(SurveyInsertRequest)
 
 
 # survey meta insert

@@ -5,10 +5,9 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Response
 from typing import Union, List, Optional, Dict, Generator
 from sqlalchemy.orm import Session
-from rest_api.request.request import Organization, OrganizationMeta
-from rest_api.response.response import InsertAPIResponse, UpdateAPIResponse
-from rest_api.controller.survey_insert import add_csv_to_s3, create_survey_insert_request, \
-    create_survey_meta_insert_request, create_survey_meta_update_request, check_if_meta_exist
+from rest_api.request.request import Organization, OrganizationMeta, OrganizationSurvey
+from rest_api.response.response import InsertAPIResponse, UpdateAPIResponse, DeleteAPIResponse
+from rest_api.controller.survey_insert import add_csv_to_s3, available_for_delete, create_survey_insert_request, create_survey_delete_request,create_survey_meta_insert_request, create_survey_meta_update_request, check_if_meta_exist
 from rest_api.controller import get_survey_db
 from rest_api.router import auth_token
 from rest_api.config import VERSION, SUPPORTED_BATCH_SIZE, LOG_LEVEL, SUPPORTED_DATA_SIZE
@@ -87,5 +86,27 @@ async def update_surveymeta(org: OrganizationMeta, response: Response,
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
                 "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}
     else:
-        logger.error(f"{unique_id}: storing in s3 failed")
-        raise HTTPException(status_code=501, detail="Data ingestion unsuccessfull")
+        logger.error(f"{unique_id}: Data updation unsuccessful")
+        raise HTTPException(status_code=501, detail="Data updation unsuccessful")
+    
+@router.post("/v1/deepdelve/survey/delete/", response_model=DeleteAPIResponse,
+             response_model_exclude_unset=True)
+async def delete_survey(org: OrganizationSurvey, response: Response,
+                            db: Session = Depends(get_survey_db.get_db)):
+    unique_id = str(uuid4())
+    org_id = org.orgId    #entity
+    if not org:
+        logger.error(f"{unique_id}: Null update request")
+        raise HTTPException(status_code=414, detail="Upload request payload is empty")
+    response.headers["X-ZAI-REQUEST-ID"] = unique_id
+    response.headers["X-ZAI-ORG-ID"] = org_id
+    survey_delete_list, success_surv, failed_surv= available_for_delete(db = db, org = org)
+    if survey_delete_list:
+        #todo - populate the database for survey and meta
+        for id in survey_delete_list:
+            meta_ins_id = create_survey_delete_request(db = db, id = id)
+
+        return {"status": {"success": True, "code": 200}, "message": "Request successfully received", "successSurveyIds" : success_surv, "failedSurveyIds" : failed_surv}
+    else:
+        logger.error(f"{unique_id}: Data deletion failed")
+        raise HTTPException(status_code=501, detail="Data deletion unsuccessfull")

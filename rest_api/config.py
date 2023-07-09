@@ -19,14 +19,12 @@ APM_SERVICE_NAME = os.getenv("APM_SERVICE_NAME", "deepdelve-backend")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # mcq indexing
-MCQ_INDEXING_QUEUE = os.getenv("MCQ_INDEXING_QUEUE", "mcq_indexing_queue")
-MESSAGE_CHUNKS = os.getenv("MESSAGE_CHUNKS", 200)
 SUPPORTED_BATCH_SIZE = os.getenv("SUPPORTED_BATCH_SIZE", 2000)
 SUPPORTED_DATA_SIZE = os.getenv("SUPPORTED_DATA_SIZE", 500)
 UPDATE_EXISTING_DOCUMENTS = os.getenv("UPDATE_EXISTING_DOCUMENTS", True)
 
 # section_splitter_lambda name
-SECTION_LAMBDA_NAME = os.getenv("SECTION_LAMBDA_NAME", "section_splitter_lambda")
+SEARCH_LAMBDA_NAME = os.getenv("SEARCH_LAMBDA_NAME", "section_splitter_lambda")
 
 # JWT variables
 SECRET_KEY = "ae85228555d5ee5a8241be1de3c45817607ffbd7c2c89f59efd9a6a6fac5a59d"

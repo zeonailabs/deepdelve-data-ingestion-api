@@ -18,11 +18,11 @@ router = APIRouter()
 
 fake_users_db = {
     "deepdelve": {
-        "username": "deepdelve",
-        "full_name": "Biswa Singh",
-        "email": "biswa.singh@zeonai.com",
-        "hashed_password": "$2b$12$/apAOAt/MnjXqdgs/jfHZeOghw1NVL1wyrld/tCgxnr67e/DoEMEu",
-        "org_id": "deepdelve",
+        "username": "merren",
+        "full_name": "Sumit Saxena",
+        "email": "sumit.saxena@merren.io",
+        "hashed_password": "$2b$12$xP/YoduyiQSWltd8gS2iX.7yvqWOI39T0pSR1ZDCeKW/kXpfkmzOO",
+        "org_id": "1001",
         "disabled": False,
     }
 }
@@ -30,7 +30,6 @@ fake_users_db = {
 
 class Token(BaseModel):
     access_token: str
-
     token_type: str
 
 

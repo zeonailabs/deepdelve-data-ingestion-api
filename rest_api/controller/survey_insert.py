@@ -29,6 +29,20 @@ def check_if_survey_id_exist(db , org_id :str, survey_id : str):
         return True
     else:
         return False
+
+def get_id_for_survey(db , org_id :str, survey_id : str):
+    """
+
+    :param db:
+    :param org_id:
+    :param survey_id:
+    :return:
+    """
+    Id = crud.survey_insert_request.get_id(db=db, org_id=org_id, survey_id=survey_id)
+    if Id:
+        return Id
+    else:
+        return False
     
 def check_if_meta_of_survey_id_exist(db , org_id :str, survey_id : str, meta_key : str):
     """
@@ -61,8 +75,23 @@ def create_survey_insert_request(db: Session, org_id: str, survey_id: str, surve
         survey_ins_req = crud.survey_insert_request.create(db=db, obj_in=create_object)
         return survey_ins_req.id
     except Exception as e:
-        logger.error(f"{survey_id}: storing in db failed")
+        logger.error(f"{survey_id}: storing in db failed : {e}")
     
+def create_survey_delete_request(db: Session, id: int):
+    """
+
+    :param survey:
+    :param survey_id:
+    :param file_path:
+    :param org_id:
+    :param db:
+    :return:
+    """
+    try:
+        survey_delete_req = crud.survey_delete_request.remove(db=db, id= id)
+        return survey_delete_req.id
+    except Exception as e:
+        logger.error(f"{id}: deleting in db failed : {e}")
 
 def create_survey_meta_insert_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
                                        meta_value: str = None):
@@ -80,7 +109,7 @@ def create_survey_meta_insert_request(db: Session, org_id: str, survey_id: str, 
         survey_meta_ins_req = crud.survey_meta_insert_request.create(db=db, obj_in=create_object)
         return survey_meta_ins_req.id
     except Exception as e:
-        logger.error(f"{survey_id}: storing in db failed")
+        logger.error(f"{survey_id}: storing in db failed : {e}")
 
 def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
                                        meta_value: str = None):
@@ -100,7 +129,7 @@ def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, 
         survey_meta_up_req = crud.survey_meta_update_request.update(db=db, db_obj= db_obj, obj_in=update_object)
         return survey_meta_up_req.id
     except Exception as e:
-        logger.error(f"{survey_id}: storing in db failed")
+        logger.error(f"{survey_id}: updating in db failed : {e}")
 
 def check_if_meta_exist(db:Session, org : Organization):
     org_id = org.orgId    #entity
@@ -128,10 +157,30 @@ def check_if_meta_exist(db:Session, org : Organization):
                 success_surv.append({"id": survey_id})
             except Exception as e:
                 failed_surv.append({"id": survey_id})
-                logger.error(f"{survey_id}: storing in s3 failed")
+                logger.error(f"{survey_id}: storing in s3 failed : {e}")
 
         return (meta_insert_list, meta_update_list , success_surv, failed_surv)
 
+def available_for_delete(db:Session, org : Organization):
+    org_id = org.orgId    #entity
+    surveyList = org.surveyList
+    survey_delete_list = []
+    failed_surv = []
+    success_surv = []
+    for survey in surveyList:
+        survey_id = survey.surveyId     #entity
+        Id = get_id_for_survey(db , org_id , survey_id)
+        if Id:
+            success_surv.append({"id": survey_id})
+            survey_delete_list.append(Id)
+            logger.error(f"{survey_id}: survey_id exists for the org_id")
+            continue
+        else:
+            failed_surv.append({"id": survey_id})
+            logger.error(f"{survey_id}: survey_id doesnt exists for the org_id")
+        
+    return (survey_delete_list , success_surv, failed_surv)
+    
 def add_csv_to_s3(org : Organization, db:Session):
     now = datetime.now()
     date = now.strftime("%d-%m-%Y")
@@ -185,7 +234,7 @@ def add_csv_to_s3(org : Organization, db:Session):
             success_surv.append({"id": survey_id})
         except Exception as e:
             failed_surv.append({"id": survey_id})
-            logger.error(f"{survey_id}: storing in s3 failed")
+            logger.error(f"{survey_id}: storing in s3 failed : {e}")
     
     return (meta_list, surv_s3_list, success_surv, failed_surv)
 

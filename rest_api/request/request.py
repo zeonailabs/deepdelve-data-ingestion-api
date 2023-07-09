@@ -1,4 +1,3 @@
-import string
 from typing import Any, Collection, Dict, List, Optional, Union, Literal
 
 from pydantic import BaseModel
@@ -41,17 +40,18 @@ class SurveyMeta(BaseModel):
     surveyId: str
     metaData: List[MetaData]
 
+
 class DataSurvey(BaseModel):
     surveyId: str
 
+
 class Organization(BaseModel):
-    orgId: str
     surveyList: List[Survey]
 
+
 class OrganizationMeta(BaseModel):
-    orgId: str
     surveyList: List[SurveyMeta]
 
+
 class OrganizationSurvey(BaseModel):
-    orgId: str
     surveyList: List[DataSurvey]

@@ -6,7 +6,6 @@ from rest_api.db.models.base import ORMBase
 
 class SurveyInsertRequest(ORMBase):
     __tablename__ = "surveyData"
-
     orgId = Column(String(256), nullable=False)
     surveyId = Column(String(256), nullable=False)
     s3_file_path = Column(String(1024), nullable=True)
@@ -21,7 +20,6 @@ class SurveyInsertRequest(ORMBase):
 
 class SurveyMetaInsertRequest(ORMBase):
     __tablename__ = "surveyMetaData"
-
     # surv_table_id = Column(
     #     Integer,
     #     ForeignKey("summarygen_request.id", ondelete="CASCADE", onupdate="CASCADE"),
@@ -37,4 +35,4 @@ class SurveyMetaInsertRequest(ORMBase):
             [orgId, surveyId], [SurveyInsertRequest.orgId, SurveyInsertRequest.surveyId], ondelete="CASCADE", onupdate="CASCADE"
         ),
         {},
-    )  # type: ignore
+    )

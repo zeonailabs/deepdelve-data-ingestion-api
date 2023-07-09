@@ -25,6 +25,7 @@ class UpdateAPIResponse(BaseModel):
     successSurveyIds: List[Dict]
     failedSurveyIds: List[Dict]
 
+
 class DeleteAPIResponse(BaseModel):
     status: StatusObj
     message: str

@@ -8,5 +8,5 @@ class ORMBase(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)
-    #created = Column(DateTime, server_default=func.now())
-    #updated = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
+    created = Column(DateTime, server_default=func.now())
+    updated = Column(DateTime, server_default=func.now(), server_onupdate=func.now())

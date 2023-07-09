@@ -65,12 +65,9 @@ def write_file_to_s3(file_obj, bucket_name: str, org_id: str, doc_id: str, file_
 def write_files_to_s3(csv_file_path: str, csv_buffer, csv_path: str):
     """
 
-    :param file_name:
-    :param bucket_name:
-    :param file_obj:
-    :param org_id:
-    :param doc_id:
-    :param request_type:
+    :param csv_buffer:
+    :param csv_path:
+    :param csv_file_path:
     :return:
     """
     s3_client = get_s3_client()

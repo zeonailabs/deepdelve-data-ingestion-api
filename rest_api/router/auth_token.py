@@ -70,7 +70,6 @@ def get_user(db, username: str):
 
 def authenticate_user(fake_db, username: str, password: str):
     user = get_user(fake_db, username)
-    print(user)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -128,7 +127,6 @@ def callback_auth_request(token: str = Depends(oauth2_scheme)) -> bool:
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
-    print(user)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

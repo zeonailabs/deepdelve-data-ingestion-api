@@ -154,15 +154,14 @@ def check_if_meta_exist(db: Session, org_id: str, org: Organization):
         req_id = get_id_for_survey(db=db, org_id=org_id, survey_id=survey_id)
         # store meta in dictionary
         meta_data = survey.metaData
-        print(meta_data)
         for m in meta_data:
             meta_key = m.metaKey
             try:
-                if check_if_meta_of_survey_id_exist(db, req_id=req_id, meta_key=meta_key):
-                    meta_dict = {"surveyReqId": req_id, "metaKey": m.metaKey, "metaValue": m.value}
+                if check_if_meta_of_survey_id_exist(db, req_id=req_id[0], meta_key=meta_key):
+                    meta_dict = {"surveyReqId": req_id[0], "metaKey": m.metaKey, "metaValue": m.value}
                     meta_update_list.append(meta_dict)
                 else:
-                    meta_dict = {"surveyReqId": req_id, "metaKey": m.metaKey, "metaValue": m.value}
+                    meta_dict = {"surveyReqId": req_id[0], "metaKey": m.metaKey, "metaValue": m.value}
                     meta_insert_list.append(meta_dict)
                 success_surv.append({"id": survey_id})
             except Exception as e:

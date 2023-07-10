@@ -46,7 +46,7 @@ def get_id_for_survey(db, org_id: str, survey_id: str):
         return False
 
 
-def check_if_meta_of_survey_id_exist(db, org_id: str, survey_id: str, meta_key: str):
+def check_if_meta_of_survey_id_exist(db, req_id: int, meta_key: str):
     """
 
     :param db:
@@ -56,7 +56,7 @@ def check_if_meta_of_survey_id_exist(db, org_id: str, survey_id: str, meta_key: 
     :return:
     """
 
-    if crud.survey_meta_insert_request.get_meta_id(db=db, org_id=org_id, survey_id=survey_id, meta_key=meta_key):
+    if crud.survey_meta_insert_request.get_meta_id(db=db, req_id=req_id, meta_key=meta_key):
         return True
     else:
         return False
@@ -100,24 +100,22 @@ def create_survey_delete_request(db: Session, id: int):
         logger.error(f"{id}: deleting in db failed : {e}")
 
 
-def create_survey_meta_insert_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
+def create_survey_meta_insert_request(db: Session, survey_req_id: int, meta_key: str = None,
                                       meta_value: str = None):
     """
 
+    :param meta_key:
+    :param survey_req_id:
     :param meta_value:
-    :param survey:
-    :param survey_id:
-    :param file_path:
-    :param org_id:
     :param db:
     :return:
     """
-    create_object = SurvMetaInsReqCreate(orgId=org_id, surveyId=survey_id, metaKey=meta_key, metaValue=meta_value)
+    create_object = SurvMetaInsReqCreate(surveyReqId=survey_req_id, metaKey=meta_key, metaValue=meta_value)
     try:
         survey_meta_ins_req = crud.survey_meta_insert_request.create(db=db, obj_in=create_object)
         return survey_meta_ins_req.id
     except Exception as e:
-        logger.error(f"{survey_id}: storing in db failed : {e}")
+        logger.error(f"{survey_req_id}: storing in db failed : {e}")
 
 
 def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
@@ -236,7 +234,7 @@ def add_csv_to_s3(org_id: str, org: Organization, db: Session):
         csv_path = "survey_data/" + org_id + "/" + survey_id + "/"
         csv_file_path = csv_path + csv_file
         csv_buffer = StringIO()
-        survey_df.to_csv(csv_buffer)
+        survey_df.to_csv(csv_buffer, index=False)
         try:
             s3_path = write_files_to_s3(csv_file_path=csv_file_path, csv_buffer=csv_buffer, csv_path=csv_path)
             surv_dict = {"orgId": org_id, "surveyId": survey_id, "surveyDescription": survey_description,

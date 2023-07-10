@@ -3,31 +3,27 @@ from typing import List, Dict
 from typing import Optional
 
 
-class SurvInsReqBase(BaseModel):
-    orgId: str
-    surveyId: str
-
-class SurvInsReqCreate(SurvInsReqBase):
+class SurvInsReqCreate(BaseModel):
     orgId: str
     surveyId: str
     surveyDescription: Optional[str] = None
     s3_file_path: Optional[str] = None
-    
-class SurvMetaInsReqCreate(SurvInsReqBase):
-    orgId: str
-    surveyId: str
+
+
+class SurvMetaInsReqCreate(BaseModel):
+    surveyReqId: int
     metaKey: Optional[str] = None
     metaValue: Optional[str] = None
 
-class SurvUpReqCreate(SurvInsReqBase):
+
+class SurvUpReqCreate(BaseModel):
     orgId: str
     surveyId: str
     surveyDescription: Optional[str] = None
     s3_file_path: Optional[str] = None
-    
-class SurvMetaUpReqCreate(SurvInsReqBase):
-    orgId: str
-    surveyId: str
+
+
+class SurvMetaUpReqCreate(BaseModel):
+    surveyReqId: int
     metaKey: Optional[str] = None
     metaValue: Optional[str] = None
-

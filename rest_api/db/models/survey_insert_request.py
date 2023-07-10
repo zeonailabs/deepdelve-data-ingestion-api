@@ -20,19 +20,12 @@ class SurveyInsertRequest(ORMBase):
 
 class SurveyMetaInsertRequest(ORMBase):
     __tablename__ = "surveyMetaData"
-    # surv_table_id = Column(
-    #     Integer,
-    #     ForeignKey("summarygen_request.id", ondelete="CASCADE", onupdate="CASCADE"),
-    #     nullable=False,
-    #     index=True
-    # )
-    orgId = Column(String(256), nullable=False)
-    surveyId = Column(String(256), nullable=False)
+    surveyReqId = Column(
+         Integer,
+         ForeignKey("surveyData.id", ondelete="CASCADE", onupdate="CASCADE"),
+         nullable=False,
+         index=True
+    )
     metaKey = Column(String(1024), nullable=True)
     metaValue = Column(String(1024), nullable=True)
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [orgId, surveyId], [SurveyInsertRequest.orgId, SurveyInsertRequest.surveyId], ondelete="CASCADE", onupdate="CASCADE"
-        ),
-        {},
-    )
+

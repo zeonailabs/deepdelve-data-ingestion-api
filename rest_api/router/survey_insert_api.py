@@ -49,7 +49,7 @@ async def submit_survey(org: Organization, response: Response,
 
         # todo - populate the database for meta
         for dict in meta_list:
-            meta_ins_id = create_survey_meta_insert_request(db=db, org_id=dict["orgId"], survey_id=dict["surveyId"],
+            meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
                                                             meta_key=dict["metaKey"], meta_value=dict["metaValue"])
 
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",

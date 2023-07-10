@@ -24,8 +24,16 @@ class CRUDSurvMetaInsReq(CRUDBase[SurveyMetaInsertRequest, SurvMetaInsReqCreate,
     def get(self, db: Session, req_id: int):
         return db.query(self.model).filter((self.model.surveyReqId == req_id)).first()
 
+    def get_meta(self, db: Session, req_id: int, meta_key: str):
+        return db.query(self.model).filter((self.model.surveyReqId == req_id) & (
+                self.model.metaKey == meta_key)).first()
+
+    def get_id(self, db: Session, req_id: int):
+        return db.query(self.model.id).filter((self.model.surveyReqId == req_id)).first()
+
     def get_meta_id(self, db: Session, req_id: int, meta_key: str):
-        return db.query(self.model.id).filter((self.model.surveyReqId == req_id) & (self.model.metaKey == meta_key)).first()
+        return db.query(self.model.id).filter(
+            (self.model.surveyReqId == req_id) & (self.model.metaKey == meta_key)).first()
 
 
 survey_meta_insert_request = CRUDSurvMetaInsReq(SurveyMetaInsertRequest)

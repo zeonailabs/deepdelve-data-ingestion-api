@@ -75,12 +75,12 @@ async def update_surveymeta(org: OrganizationMeta, response: Response,
     if meta_insert_list or meta_update_list:
         # todo - populate the database for meta
         for dict in meta_update_list:
-            meta_ins_id = create_survey_meta_update_request(db=db, org_id=dict["orgId"], survey_id=dict["surveyId"],
+            meta_ins_id = create_survey_meta_update_request(db=db, survey_req_id=dict["surveyReqId"],
                                                             meta_key=dict["metaKey"], meta_value=dict["metaValue"])
 
         # todo - populate the database for meta
         for dict in meta_insert_list:
-            meta_ins_id = create_survey_meta_insert_request(db=db, org_id=dict["orgId"], survey_id=dict["surveyId"],
+            meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=dict["surveyReqId"],
                                                             meta_key=dict["metaKey"], meta_value=dict["metaValue"])
 
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",

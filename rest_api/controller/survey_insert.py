@@ -118,10 +118,11 @@ def create_survey_meta_insert_request(db: Session, survey_req_id: int, meta_key:
         logger.error(f"{survey_req_id}: storing in db failed : {e}")
 
 
-def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, meta_key: str = None,
+def create_survey_meta_update_request(db: Session, survey_req_id: int, meta_key: str = None,
                                       meta_value: str = None):
     """
 
+    :param req_id:
     :param meta_key:
     :param meta_value:
     :param survey:
@@ -131,14 +132,14 @@ def create_survey_meta_update_request(db: Session, org_id: str, survey_id: str, 
     :param db:
     :return:
     """
-    db_obj = crud.survey_meta_update_request.get_meta(db=db, org_id=org_id, survey_id=survey_id, meta_key=meta_key)
+    db_obj = crud.survey_meta_update_request.get_meta(db=db, req_id=survey_req_id, meta_key=meta_key)
     # db_obj = crud.survey_meta_update_request.get(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
-    update_object = SurvMetaUpReqCreate(orgId=org_id, surveyId=survey_id, metaKey=meta_key, metaValue=meta_value)
+    update_object = SurvMetaUpReqCreate(surveyReqId=survey_req_id, metaKey=meta_key, metaValue=meta_value)
     try:
         survey_meta_up_req = crud.survey_meta_update_request.update(db=db, db_obj=db_obj, obj_in=update_object)
         return survey_meta_up_req.id
     except Exception as e:
-        logger.error(f"{survey_id}: updating in db failed : {e}")
+        logger.error(f"{survey_req_id}: updating in db failed : {e}")
 
 
 def check_if_meta_exist(db: Session, org_id: str, org: Organization):
@@ -149,25 +150,24 @@ def check_if_meta_exist(db: Session, org_id: str, org: Organization):
     failed_surv = []
     success_surv = []
     for survey in surveyList:
-        meta_dict = {}
-        survey_id = survey.surveyId  # entity
+        survey_id = survey.surveyId
+        req_id = get_id_for_survey(db=db, org_id=org_id, survey_id=survey_id)
         # store meta in dictionary
         meta_data = survey.metaData
         print(meta_data)
         for m in meta_data:
-            meta_dict = {}
             meta_key = m.metaKey
             try:
-                if check_if_meta_of_survey_id_exist(db, org_id, survey_id, meta_key):
-                    meta_dict = {"orgId": org_id, "surveyId": survey_id, "metaKey": m.metaKey, "metaValue": m.value}
+                if check_if_meta_of_survey_id_exist(db, req_id=req_id, meta_key=meta_key):
+                    meta_dict = {"surveyReqId": req_id, "metaKey": m.metaKey, "metaValue": m.value}
                     meta_update_list.append(meta_dict)
                 else:
-                    meta_dict = {"orgId": org_id, "surveyId": survey_id, "metaKey": m.metaKey, "metaValue": m.value}
+                    meta_dict = {"surveyReqId": req_id, "metaKey": m.metaKey, "metaValue": m.value}
                     meta_insert_list.append(meta_dict)
                 success_surv.append({"id": survey_id})
             except Exception as e:
                 failed_surv.append({"id": survey_id})
-                logger.error(f"{survey_id}: storing in s3 failed : {e}")
+                logger.error(f"{survey_id}: Meta storage failed : {e}")
 
         return meta_insert_list, meta_update_list, success_surv, failed_surv
 

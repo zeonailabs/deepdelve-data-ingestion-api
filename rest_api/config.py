@@ -1,8 +1,8 @@
 import os
 
 # AWS credential
-S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID", "AKIA55DPZLRNKTP52B47")
-S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "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")
+S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID", "")
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "")
 AWS_REGION_VALUE = os.getenv("AWS_REGION_VALUE", "us-east-1")
 S3_BUCKET = os.getenv("S3_BUCKET", "deepdelveclientdata")
 

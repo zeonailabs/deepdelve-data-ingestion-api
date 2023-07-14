@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/insert", response_model=InsertAPIResponse,
-             responses={204: {"model": Message}, 413: {"model": Message}, 501: {"model": Message}},
+             responses={400: {"model": Message}, 413: {"model": Message}, 501: {"model": Message}},
              response_model_exclude_unset=True)
 async def submit_survey(response: Response, org: Organization,
                         db: Session = Depends(get_survey_db.get_db),
@@ -28,7 +28,7 @@ async def submit_survey(response: Response, org: Organization,
 
     if not org:
         logger.error(f"{unique_id}: Null organisation request")
-        return JSONResponse(status_code=204, content={"message": "Empty payload"})
+        return JSONResponse(status_code=400, content={"message": "Empty payload"})
 
     total_data_points = 0
     for survlst in org.surveyList:
@@ -64,7 +64,7 @@ async def submit_survey(response: Response, org: Organization,
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/metaupdate", response_model=UpdateAPIResponse,
-             responses={404: {"model": Message}, 413: {"model": Message}, 501: {"model": Message}},
+             responses={400: {"model": Message}, 413: {"model": Message}, 501: {"model": Message}},
              response_model_exclude_unset=True)
 async def update_surveymeta(response: Response, org: OrganizationMeta,
                             db: Session = Depends(get_survey_db.get_db),
@@ -74,7 +74,7 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
     # org_id = "1001"  # entity
     if not org:
         logger.error(f"{unique_id}: Null update request")
-        raise HTTPException(status_code=204, detail="Upload request payload is empty")
+        return JSONResponse(status_code=400, content={"message": "Empty Request"})
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
     meta_insert_list, meta_update_list, success_surv, failed_surv = check_if_meta_exist(db=db, org_id=org_id, org=org)
@@ -97,7 +97,7 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/delete", response_model=DeleteAPIResponse,
-             responses={204: {"model": Message}, 410: {"model": Message}, 501: {"model": Message}},
+             responses={400: {"model": Message}, 410: {"model": Message}, 501: {"model": Message}},
              response_model_exclude_unset=True)
 async def delete_survey(response: Response, org: OrganizationSurvey,
                         db: Session = Depends(get_survey_db.get_db),
@@ -107,7 +107,7 @@ async def delete_survey(response: Response, org: OrganizationSurvey,
     # org_id = "1001" # entity
     if not org:
         logger.error(f"{unique_id}: Null update request")
-        raise HTTPException(status_code=204, detail="Upload request payload is empty")
+        return JSONResponse(status_code=400, content={"message": "Empty Request"})
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
     survey_delete_list, s3_list, success_surv, failed_surv = available_for_delete(db=db, org_id=org_id, org=org)
@@ -118,7 +118,7 @@ async def delete_survey(response: Response, org: OrganizationSurvey,
         stats = delete_survey_from_s3(s3_list)
         if stats:
             logger.error(f"{stats}: s3_folder deletion failed")
-            raise HTTPException(status_code=501, detail="s3 folder deletion unsuccessful")
+            return JSONResponse(status_code=501, content={"message": "Data Deletion Unsuccessful"})
 
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
                 "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}

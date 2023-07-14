@@ -248,17 +248,6 @@ def add_csv_to_s3(org_id: str, org: Organization, db: Session):
         json_file_path = csv_path + json_file
 
         #check if data_keys file exists in s3
-        # data_keys = prefix_exists(json_file_path)
-        # if not data_keys:
-        #     json_keys = get_keys(survey=survey)
-        # if check_if_survey_id_exist(db, org_id, survey_id):
-        #     json_keys = get_keys(survey=survey)
-        #     if data_keys != json_keys and data_keys:
-        #         failed_surv.append({"id": survey_id})
-        #         logger.error(f"{survey_id}: survey_id already exists for the org_id and keys are not same")
-        #         continue
-
-        #check if data_keys file exists in s3
         data_keys = prefix_exists(json_file_path)
         json_keys = get_keys(survey=survey)
         # print(data_keys, json_keys)

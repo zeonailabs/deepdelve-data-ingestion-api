@@ -3,7 +3,7 @@ from rest_api.request.request import Organization
 from rest_api.db.models.survey_insert_request import SurveyInsertRequest, SurveyMetaInsertRequest
 from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, \
     SurvMetaUpReqCreate
-from rest_api.controller.utils import write_files_to_s3
+from rest_api.controller.utils import write_files_to_s3, delete_folder_from_s3
 import logging
 import pandas as pd
 from io import StringIO
@@ -42,6 +42,20 @@ def get_id_for_survey(db, org_id: str, survey_id: str):
     Id = crud.survey_insert_request.get_id(db=db, org_id=org_id, survey_id=survey_id)
     if Id:
         return Id
+    else:
+        return False
+    
+def get_s3_for_survey(db, org_id: str, survey_id: str):
+    """
+
+    :param db:
+    :param org_id:
+    :param survey_id:
+    :return:
+    """
+    db_obj = crud.survey_insert_request.get(db=db, org_id=org_id, survey_id=survey_id)
+    if db_obj:
+        return db_obj.s3_file_path
     else:
         return False
 
@@ -175,12 +189,15 @@ def available_for_delete(db: Session, org_id: str, org: Organization):
     org_id = org_id
     surveyList = org.surveyList
     survey_delete_list = []
+    s3_list = []
     failed_surv = []
     success_surv = []
     for survey in surveyList:
         survey_id = survey.surveyId  # entity
         Id = get_id_for_survey(db, org_id, survey_id)
         if Id:
+            s3_path = get_s3_for_survey(db, org_id, survey_id)
+            s3_list.append(s3_path)
             success_surv.append({"id": survey_id})
             survey_delete_list.append(Id)
             logger.error(f"{survey_id}: survey_id exists for the org_id")
@@ -189,8 +206,17 @@ def available_for_delete(db: Session, org_id: str, org: Organization):
             failed_surv.append({"id": survey_id})
             logger.error(f"{survey_id}: survey_id doesnt exists for the org_id")
 
-    return survey_delete_list, success_surv, failed_surv
+    return survey_delete_list, s3_list, success_surv, failed_surv
 
+def delete_survey_from_s3(s3_list):
+    failed_s3 = []
+    for s3_path in s3_list:
+        csv_path = s3_path
+        s3_delete = delete_folder_from_s3(csv_path = csv_path)
+        if not s3_delete:
+            failed_s3.append(s3_path)
+            logging.error(f"s3 folder failed to delete : {s3_path}")
+    return failed_s3
 
 def add_csv_to_s3(org_id: str, org: Organization, db: Session):
     now = datetime.now()

@@ -6,7 +6,7 @@ from rest_api.request.request import Organization, OrganizationMeta, Organizatio
 from rest_api.response.response import InsertAPIResponse, UpdateAPIResponse, DeleteAPIResponse
 from rest_api.controller.survey_insert import add_csv_to_s3, available_for_delete, create_survey_insert_request, \
     create_survey_delete_request, create_survey_meta_insert_request, create_survey_meta_update_request, \
-    check_if_meta_exist
+    check_if_meta_exist, delete_survey_from_s3
 from rest_api.controller import get_survey_db
 from rest_api.router import auth_token
 from rest_api.config import LOG_LEVEL, SUPPORTED_DATA_SIZE
@@ -23,6 +23,7 @@ async def submit_survey(org: Organization, response: Response,
                         current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())
     org_id = current_user.org_id  # entity
+    # org_id = "1001"  # entity
     if not org:
         logger.error(f"{unique_id}: Null organisation request")
         raise HTTPException(status_code=414, detail="Organisation request payload is empty")
@@ -66,6 +67,7 @@ async def update_surveymeta(org: OrganizationMeta, response: Response,
                             current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())
     org_id = current_user.org_id  # entity
+    # org_id = "1001"  # entity
     if not org:
         logger.error(f"{unique_id}: Null update request")
         raise HTTPException(status_code=414, detail="Upload request payload is empty")
@@ -97,17 +99,22 @@ async def delete_survey(org: OrganizationSurvey, response: Response,
                         current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())
     org_id = current_user.org_id  # entity
+    # org_id = "1001" # entity
     if not org:
         logger.error(f"{unique_id}: Null update request")
         raise HTTPException(status_code=414, detail="Upload request payload is empty")
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
-    survey_delete_list, success_surv, failed_surv = available_for_delete(db=db, org_id=org_id, org=org)
+    survey_delete_list, s3_list,  success_surv, failed_surv = available_for_delete(db=db, org_id=org_id, org=org)
     if survey_delete_list:
         # todo - populate the database for survey and meta
         for id in survey_delete_list:
             meta_ins_id = create_survey_delete_request(db=db, id=id)
-
+        stats = delete_survey_from_s3(s3_list)
+        if stats:
+            logger.error(f"{stats}: s3_folder deletion failed")
+            raise HTTPException(status_code=501, detail="s3 folder deletion unsuccessful")
+        
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
                 "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}
     else:

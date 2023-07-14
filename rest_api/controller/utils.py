@@ -78,3 +78,24 @@ def write_files_to_s3(csv_file_path: str, csv_buffer, csv_path: str):
         logging.error(e)
 
     return 's3://' + S3_BUCKET + '/' + csv_path
+
+def delete_folder_from_s3(csv_path: str):
+    """
+
+    :param csv_buffer:
+    :param csv_path:
+    :param csv_file_path:
+    :return:
+    """
+    s3_client = get_s3_client()
+    csv_path = csv_path.replace(f"s3://{S3_BUCKET}/", "")
+    try:
+        objects = s3_client.list_objects(Bucket=S3_BUCKET, Prefix=csv_path)
+        # print(objects)
+        for object in objects['Contents']:
+            s3_client.delete_object(Bucket=S3_BUCKET, Key=object['Key'])
+        s3_client.delete_object(Bucket=S3_BUCKET, Key=csv_path)
+        return True
+    except ClientError as e:
+        logging.error(e)
+        return False

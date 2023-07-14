@@ -1,5 +1,4 @@
 import logging
-
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from starlette.middleware.cors import CORSMiddleware
@@ -35,19 +34,19 @@ app = get_application()
 handler = Mangum(app, lifespan="off")
 
 
- #async def catch_exceptions_middleware(request: Request, call_next):
- #   try:
- #       return await call_next(request)
- #   except Exception as e:
- #       logger.info(e)
- #       return PlainTextResponse("Something went wrong. Try again after sometime.", status_code=400)
+# async def catch_exceptions_middleware(request: Request, call_next):
+#    try:
+#        return await call_next(request)
+#    except Exception as e:
+#        logger.info(e)
+#        return PlainTextResponse("Something went wrong. Try again after sometime.", status_code=400)
 
 
- #app.middleware('http')(catch_exceptions_middleware)
+# app.middleware('http')(catch_exceptions_middleware)
 
 #handler = Mangum(app, lifespan="off")
 
 #logger.info("Open http://127.0.0.1:8000/docs to see Swagger API Documentation.")
 
 #if __name__ == "__main__":
-#    uvicorn.run(app, host="0.0.0.0", port=8000)
+#   uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -118,12 +118,6 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-# Ensure the request is authenticated
-def callback_auth_request(token: str = Depends(oauth2_scheme)) -> bool:
-    authenticated = token == CALLBACK_API_KEY
-    return authenticated
-
-
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)

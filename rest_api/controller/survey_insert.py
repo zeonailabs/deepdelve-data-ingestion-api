@@ -7,13 +7,13 @@ from rest_api.controller.utils import write_files_to_s3, delete_folder_from_s3
 import logging
 import pandas as pd
 from io import StringIO
+from datetime import datetime
+from rest_api.db import crud
+from sqlalchemy.orm import Session
 
 df = pd.DataFrame()
 logger = logging.getLogger('survey_insert')
 logger.setLevel(LOG_LEVEL)
-from datetime import datetime
-from rest_api.db import crud
-from sqlalchemy.orm import Session
 
 
 def check_if_survey_id_exist(db, org_id: str, survey_id: str):

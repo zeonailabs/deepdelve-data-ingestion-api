@@ -9,29 +9,29 @@ from rest_api.controller.survey_insert import add_csv_to_s3, available_for_delet
     check_if_meta_exist, delete_survey_from_s3
 from rest_api.controller import get_survey_db
 from rest_api.router import auth_token
-from rest_api.config import LOG_LEVEL, SUPPORTED_DATA_SIZE
+from rest_api.config import LOG_LEVEL, SUPPORTED_DATA_SIZE, VERSION
 
 logger = logging.getLogger('survey_insert')
 logger.setLevel(LOG_LEVEL)
 router = APIRouter()
 
 
-@router.post("/v1/deepdelve/survey/insert/", response_model=InsertAPIResponse,
+@router.post("/" + VERSION + "/deepdelve/survey/insert", response_model=InsertAPIResponse,
              response_model_exclude_unset=True)
-async def submit_survey(org: Organization, response: Response,
+async def submit_survey(response: Response, org: Organization,
                         db: Session = Depends(get_survey_db.get_db),
                         current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())
-    org_id = current_user.org_id  # entity
-    # org_id = "1001"  # entity
+    org_id = current_user.org_id
+
     if not org:
         logger.error(f"{unique_id}: Null organisation request")
         raise HTTPException(status_code=414, detail="Organisation request payload is empty")
 
     total_data_points = 0
-    for surv in org.surveyList:
-        for data in surv.surveyData:
-            total_data_points += 1
+    for survlst in org.surveyList:
+        for survdata in survlst.surveyData:
+            total_data_points += len(survdata.Data)
 
     if total_data_points > SUPPORTED_DATA_SIZE:
         logger.error(f"{unique_id}: Input Request too long")
@@ -60,9 +60,9 @@ async def submit_survey(org: Organization, response: Response,
         raise HTTPException(status_code=501, detail="Data Ingestion unsuccessful")
 
 
-@router.post("/v1/deepdelve/survey/metaupdate/", response_model=UpdateAPIResponse,
+@router.post("/" + VERSION + "/deepdelve/survey/metaupdate", response_model=UpdateAPIResponse,
              response_model_exclude_unset=True)
-async def update_surveymeta(org: OrganizationMeta, response: Response,
+async def update_surveymeta(response: Response, org: OrganizationMeta,
                             db: Session = Depends(get_survey_db.get_db),
                             current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())
@@ -92,9 +92,9 @@ async def update_surveymeta(org: OrganizationMeta, response: Response,
         raise HTTPException(status_code=501, detail="Data updation unsuccessful")
 
 
-@router.post("/v1/deepdelve/survey/delete/", response_model=DeleteAPIResponse,
+@router.post("/" + VERSION + "/deepdelve/survey/delete", response_model=DeleteAPIResponse,
              response_model_exclude_unset=True)
-async def delete_survey(org: OrganizationSurvey, response: Response,
+async def delete_survey(response: Response, org: OrganizationSurvey,
                         db: Session = Depends(get_survey_db.get_db),
                         current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())

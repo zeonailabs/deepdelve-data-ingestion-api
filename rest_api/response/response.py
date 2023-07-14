@@ -7,6 +7,10 @@ from numpy import double
 from pydantic import BaseModel
 
 
+class Message(BaseModel):
+    message: str
+
+
 class StatusObj(BaseModel):
     success: bool
     code: int

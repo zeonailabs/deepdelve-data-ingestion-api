@@ -19,8 +19,8 @@ APM_SERVICE_NAME = os.getenv("APM_SERVICE_NAME", "deepdelve-backend")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # mcq indexing
-SUPPORTED_BATCH_SIZE = os.getenv("SUPPORTED_BATCH_SIZE", 2000)
-SUPPORTED_DATA_SIZE = os.getenv("SUPPORTED_DATA_SIZE", 500)
+SUPPORTED_BATCH_SIZE = int(os.getenv("SUPPORTED_BATCH_SIZE", 2000))
+SUPPORTED_DATA_SIZE = int(os.getenv("SUPPORTED_DATA_SIZE", 500))
 UPDATE_EXISTING_DOCUMENTS = os.getenv("UPDATE_EXISTING_DOCUMENTS", True)
 
 # section_splitter_lambda name

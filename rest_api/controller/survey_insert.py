@@ -1,9 +1,9 @@
 from rest_api.config import LOG_LEVEL
-from rest_api.request.request import Organization
+from rest_api.request.request import Organization, Survey
 from rest_api.db.models.survey_insert_request import SurveyInsertRequest, SurveyMetaInsertRequest
 from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, \
     SurvMetaUpReqCreate
-from rest_api.controller.utils import write_files_to_s3, delete_folder_from_s3
+from rest_api.controller.utils import write_files_to_s3, delete_folder_from_s3, prefix_exists, write_json_to_s3
 import logging
 import pandas as pd
 from io import StringIO
@@ -218,12 +218,23 @@ def delete_survey_from_s3(s3_list):
             logging.error(f"s3 folder failed to delete : {s3_path}")
     return failed_s3
 
+def get_keys(survey : Survey):
+    data = {}
+    survey_data = survey.surveyData
+    key_list = []
+    surv_data_data = survey_data[0].Data
+    for s_data in surv_data_data:
+        key_list.append(str(s_data.key))  # entity
+    data["keys"] = sorted(key_list)
+    return data
+
 def add_csv_to_s3(org_id: str, org: Organization, db: Session):
     now = datetime.now()
     date = now.strftime("%d-%m-%Y")
     time = now.strftime("%H:%M:%S")
     surv_s3_list = []
     meta_list = []
+    json_s3 = []
     org_id = org_id  # entity
     surveyList = org.surveyList
     failed_surv = []
@@ -231,10 +242,21 @@ def add_csv_to_s3(org_id: str, org: Organization, db: Session):
     for survey in surveyList:
         survey_df_list = []
         survey_id = survey.surveyId  # entity
-        if check_if_survey_id_exist(db, org_id, survey_id):
+        csv_file = "survey_data_" + org_id + "_" + survey_id + "_" + date + "_" + time + ".csv"
+        json_file = "survey_data_" + org_id + "_" + survey_id + "_keys.json"
+        csv_path = "survey_data/" + org_id + "/" + survey_id + "/"
+        json_file_path = csv_path + json_file
+
+        #check if data_keys file exists in s3
+        data_keys = prefix_exists(json_file_path)
+        json_keys = get_keys(survey=survey)
+        # print(data_keys, json_keys)
+        if data_keys != json_keys and data_keys:
             failed_surv.append({"id": survey_id})
-            logger.error(f"{survey_id}: survey_id already exists for the org_id")
+            # print(f"{survey_id}: survey_id already exists for the org_id and keys are not same")
+            logger.error(f"{survey_id}: survey_id already exists for the org_id and keys are not same")
             continue
+            
         survey_description = survey.surveyDescription  # entity
         # store meta in dictionary
         meta_data = survey.metaData
@@ -255,19 +277,22 @@ def add_csv_to_s3(org_id: str, org: Organization, db: Session):
             survey_df_list.append(data)
 
         survey_df = pd.DataFrame(survey_df_list)
-        csv_file = "survey_data_" + org_id + "_" + survey_id + "_" + date + "_" + time + ".csv"
-        csv_path = "survey_data/" + org_id + "/" + survey_id + "/"
         csv_file_path = csv_path + csv_file
         csv_buffer = StringIO()
         survey_df.to_csv(csv_buffer, index=False)
-        try:
+        try: 
             s3_path = write_files_to_s3(csv_file_path=csv_file_path, csv_buffer=csv_buffer, csv_path=csv_path)
-            surv_dict = {"orgId": org_id, "surveyId": survey_id, "surveyDescription": survey_description,
-                         "survey_s3_file_path": s3_path}
-            surv_s3_list.append(surv_dict)
-            success_surv.append({"id": survey_id})
+            if s3_path:
+                if json_keys and not data_keys:
+                    json_s3.append(write_json_to_s3(json_file_path=json_file_path, json_object= json_keys))
+                surv_dict = {"orgId": org_id, "surveyId": survey_id, "surveyDescription": survey_description,
+                            "survey_s3_file_path": s3_path}
+                surv_s3_list.append(surv_dict)
+                success_surv.append({"id": survey_id})
+            else:
+                failed_surv.append({"id": survey_id})
         except Exception as e:
             failed_surv.append({"id": survey_id})
             logger.error(f"{survey_id}: storing in s3 failed : {e}")
 
-    return meta_list, surv_s3_list, success_surv, failed_surv
+    return meta_list, surv_s3_list, success_surv, failed_surv, json_s3

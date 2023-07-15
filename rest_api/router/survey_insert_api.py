@@ -42,25 +42,29 @@ async def submit_survey(response: Response, org: Organization,
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
 
-    meta_list, surv_s3_list, success_surv, failed_surv = add_csv_to_s3(org_id=org_id, org=org, db=db)
+    meta_list, surv_s3_list, success_surv, failed_surv, json_s3 = add_csv_to_s3(org_id=org_id, org=org, db=db)
+    # print(meta_list, surv_s3_list, success_surv, failed_surv)
     if surv_s3_list or meta_list:
+        
+        if json_s3:
+            # todo - populate the database for survey
+            for dict,js in surv_s3_list,json_s3:
+                if js:
+                    surv_ins_id = create_survey_insert_request(db=db, org_id=dict["orgId"], survey_id=dict["surveyId"],
+                                                        survey_description=dict["surveyDescription"],
+                                                        file_path=dict["survey_s3_file_path"])
 
-        # todo - populate the database for survey
-        for dict in surv_s3_list:
-            surv_ins_id = create_survey_insert_request(db=db, org_id=dict["orgId"], survey_id=dict["surveyId"],
-                                                       survey_description=dict["surveyDescription"],
-                                                       file_path=dict["survey_s3_file_path"])
-
-        # todo - populate the database for meta
-        for dict in meta_list:
-            meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
-                                                            meta_key=dict["metaKey"], meta_value=dict["metaValue"])
+            # todo - populate the database for meta
+            for dict,js in meta_list,json_s3:
+                if js:
+                    meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
+                                                                meta_key=dict["metaKey"], meta_value=dict["metaValue"])
 
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
                 "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}
     else:
         logger.error(f"{unique_id}: storing in s3 failed")
-        return JSONResponse(status_code=501, content={"message": "Data Ingestion Unsuccessful"})
+        return JSONResponse(status_code=501, content={"message": "storing in s3 failed, Data Ingestion Unsuccessful", "failedSurveyIds": failed_surv})
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/metaupdate", response_model=UpdateAPIResponse,
@@ -74,7 +78,8 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
     # org_id = "1001"  # entity
     if not org:
         logger.error(f"{unique_id}: Null update request")
-        return JSONResponse(status_code=400, content={"message": "Empty Request"})
+        return JSONResponse(status_code=400, content={"message": "Empty payload"})
+
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
     meta_insert_list, meta_update_list, success_surv, failed_surv = check_if_meta_exist(db=db, org_id=org_id, org=org)
@@ -107,7 +112,8 @@ async def delete_survey(response: Response, org: OrganizationSurvey,
     # org_id = "1001" # entity
     if not org:
         logger.error(f"{unique_id}: Null update request")
-        return JSONResponse(status_code=400, content={"message": "Empty Request"})
+        return JSONResponse(status_code=400, content={"message": "Empty payload"})
+
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
     survey_delete_list, s3_list, success_surv, failed_surv = available_for_delete(db=db, org_id=org_id, org=org)

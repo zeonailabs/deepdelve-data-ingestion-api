@@ -41,30 +41,27 @@ async def submit_survey(response: Response, org: Organization,
                                                                  "data size"})
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
+    success_surv = []
+    failed_surv = []
+    for survey in org.surveyList:
+        meta_list, surv_dict, survey_present = add_csv_to_s3(org_id=org_id, survey=survey)
+        if surv_dict:
+            surv_ins_id = create_survey_insert_request(db=db, org_id=org_id, survey_id=surv_dict["surveyId"],
+                                                       survey_description=surv_dict["surveyDescription"],
+                                                       file_path=surv_dict["survey_s3_file_path"])
 
-    meta_list, surv_s3_list, success_surv, failed_surv, json_s3 = add_csv_to_s3(org_id=org_id, org=org, db=db)
-    # print(meta_list, surv_s3_list, success_surv, failed_surv)
-    if surv_s3_list or meta_list:
-        
-        if json_s3:
-            # todo - populate the database for survey
-            for dict,js in surv_s3_list,json_s3:
-                if js:
-                    surv_ins_id = create_survey_insert_request(db=db, org_id=dict["orgId"], survey_id=dict["surveyId"],
-                                                        survey_description=dict["surveyDescription"],
-                                                        file_path=dict["survey_s3_file_path"])
+            for dict in meta_list:
+                meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
+                                                                meta_key=dict["metaKey"],
+                                                                meta_value=dict["metaValue"])
+            success_surv.append({"id": surv_dict["surveyId"]})
+        elif survey_present:
+            success_surv.append({"id": surv_dict["surveyId"]})
+        else:
+            failed_surv.append({"id": surv_dict["surveyId"]})
 
-            # todo - populate the database for meta
-            for dict,js in meta_list,json_s3:
-                if js:
-                    meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
-                                                                meta_key=dict["metaKey"], meta_value=dict["metaValue"])
-
-        return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
-                "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}
-    else:
-        logger.error(f"{unique_id}: storing in s3 failed")
-        return JSONResponse(status_code=501, content={"message": "storing in s3 failed, Data Ingestion Unsuccessful", "failedSurveyIds": failed_surv})
+    return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
+            "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/metaupdate", response_model=UpdateAPIResponse,

@@ -45,8 +45,11 @@ async def submit_survey(response: Response, org: Organization,
     failed_surv = []
     for survey in org.surveyList:
         meta_list, surv_dict, survey_present = add_csv_to_s3(org_id=org_id, survey=survey)
+        print(meta_list)
+        print(surv_dict)
+        print(survey_present)
         if surv_dict:
-            surv_ins_id = create_survey_insert_request(db=db, org_id=org_id, survey_id=surv_dict["surveyId"],
+            surv_ins_id = create_survey_insert_request(db=db, org_id=org_id, survey_id=survey.surveyId,
                                                        survey_description=surv_dict["surveyDescription"],
                                                        file_path=surv_dict["survey_s3_file_path"])
 
@@ -54,11 +57,11 @@ async def submit_survey(response: Response, org: Organization,
                 meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
                                                                 meta_key=dict["metaKey"],
                                                                 meta_value=dict["metaValue"])
-            success_surv.append({"id": surv_dict["surveyId"]})
+            success_surv.append({"id": survey.surveyId})
         elif survey_present:
-            success_surv.append({"id": surv_dict["surveyId"]})
+            success_surv.append({"id": survey.surveyId})
         else:
-            failed_surv.append({"id": surv_dict["surveyId"]})
+            failed_surv.append({"id": survey.surveyId})
 
     return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
             "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}

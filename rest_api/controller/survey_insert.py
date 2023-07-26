@@ -1,8 +1,7 @@
 from rest_api.config import LOG_LEVEL
 from rest_api.request.request import Organization, Survey
 from rest_api.db.models.survey_insert_request import SurveyInsertRequest, SurveyMetaInsertRequest
-from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, \
-    SurvMetaUpReqCreate
+from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, SurvSearchInsReqCreate, SurvFeedInsReqCreate, SurvMetaUpReqCreate, SurvSearchUpReqCreate
 from rest_api.controller.utils import write_files_to_s3, delete_folder_from_s3, prefix_exists, write_json_to_s3
 import logging
 import pandas as pd
@@ -10,6 +9,9 @@ from io import StringIO
 from datetime import datetime
 from rest_api.db import crud
 from sqlalchemy.orm import Session
+from collections import defaultdict
+from typing import Dict, Any, List, Optional
+import collections, copy
 
 df = pd.DataFrame()
 logger = logging.getLogger('survey_insert')
@@ -22,22 +24,23 @@ def check_if_survey_id_exist(db, org_id: str, survey_id: str):
     :param db:
     :param org_id:
     :param survey_id:
-    :return:
+    :return: db_object if present
     """
 
-    if crud.survey_insert_request.get_id(db=db, org_id=org_id, survey_id=survey_id):
-        return True
+    dbj = crud.survey_insert_request.get(db=db, org_id=org_id, survey_id=survey_id)
+    if dbj:
+        return dbj
     else:
         return False
 
 
-def get_id_for_survey(db, org_id: str, survey_id: str):
+def get_id_for_survey(db: Session, org_id: str, survey_id: str):
     """
 
     :param db:
     :param org_id:
     :param survey_id:
-    :return:
+    :return: db_id if present
     """
     Id = crud.survey_insert_request.get_id(db=db, org_id=org_id, survey_id=survey_id)
     if Id:
@@ -45,6 +48,19 @@ def get_id_for_survey(db, org_id: str, survey_id: str):
     else:
         return False
 
+def check_if_search_id_exists(db: Session, search_id: str):
+    """
+
+    :param db:
+    :param org_id:
+    :param survey_id:
+    :return: db_id if present
+    """
+    Id = crud.survey_search_insert_request.get_search(db=db, search_id= search_id)
+    if Id:
+        return Id
+    else:
+        return False
 
 def get_s3_for_survey(db, org_id: str, survey_id: str):
     """
@@ -60,7 +76,20 @@ def get_s3_for_survey(db, org_id: str, survey_id: str):
     else:
         return False
 
+def get_meta(db:Session, req_id: int):
+    """
 
+    :param req_id:
+    :param db:
+    :return:
+    """
+
+    dbj = crud.survey_meta_insert_request.get(db=db, req_id=req_id)
+    if dbj:
+        return dbj
+    else:
+        return False
+    
 def check_if_meta_of_survey_id_exist(db, req_id: int, meta_key: str):
     """
 
@@ -77,33 +106,108 @@ def check_if_meta_of_survey_id_exist(db, req_id: int, meta_key: str):
 
 
 def create_survey_insert_request(db: Session, org_id: str, survey_id: str, survey_description: str = None,
-                                 file_path: str = None):
+                                 file_path: str = None , total_no_of_rows: int = 0):
     """
 
     :param survey_description:
     :param survey_id:
     :param file_path:
     :param org_id:
+    :param total_no_of_rows:
     :param db:
     :return:
     """
     create_object = SurvInsReqCreate(orgId=org_id, surveyId=survey_id, surveyDescription=survey_description,
-                                     s3_file_path=file_path)
+                                     s3_file_path=file_path, total_no_of_rows = total_no_of_rows)
     try:
         survey_ins_req = crud.survey_insert_request.create(db=db, obj_in=create_object)
         return survey_ins_req.id
     except Exception as e:
         logger.error(f"{survey_id}: storing in db failed : {e}")
+    
+def create_survey_feedback_insert_request(db: Session, searchId :str, searchReqId : int, feedback: str, option: str, remarks : str):
+    """
+
+    :param survey_description:
+    :param survey_id:
+    :param file_path:
+    :param org_id:
+    :param total_no_of_rows:
+    :param db:
+    :return:
+    """
+    create_object = SurvFeedInsReqCreate(db =db, searchId = searchId, searchReqId = searchReqId, feedback = feedback, option = option, remarks = remarks)
+    try:
+        survey_feed_ins_req = crud.survey_feedback_insert_request.create(db=db, obj_in=create_object)
+        return survey_feed_ins_req.id
+    except Exception as e:
+        logger.error(f"{searchId}: storing in db failed : {e}")
+
+def create_survey_update_request(db: Session, org_id: str, survey_id: str,  total_no_of_rows: int = 0):
+    """
+
+    :param survey_id:
+    :param total_no_of_rows:
+    :param db:
+    :return:
+    """
+    db_obj = crud.survey_update_request.get(db=db, org_id= org_id , survey_id= survey_id)
+    update_object = SurvUpReqCreate(total_no_of_rows = total_no_of_rows)
+    try:
+        survey_up_req = crud.survey_update_request.update(db=db, db_obj= db_obj, obj_in=update_object)
+        return survey_up_req.id
+    except Exception as e:
+        logger.error(f"{survey_id}: storing in db failed : {e}")
+
+def create_search_insert_request(db: Session, searchId : str, orgId: str, question: str, answer: Optional[str],
+                                  inputSurveyIdList : Optional[str], filters : Optional[str], filteredSurveyIdList: Optional[str], 
+                                  modelParameter : Optional[str], calculationDescription: Optional[str]):
+    """
+
+    :param question:
+    :param search_id:
+    :param filters:
+    :param org_id:
+    :param filteredSurveyList:
+    :param inputSurveyList:
+    :param modelParameter:
+    :param calculationDescription:
+    :param answer:
+    :param db:
+    :return:
+    """
+    create_object = SurvSearchInsReqCreate(searchId= searchId, orgId=orgId, question = question, answer = answer ,
+                                           inputSurveyIdList = inputSurveyIdList, filters = filters,
+                                           filteredSurveyIdList = filteredSurveyIdList, modelParameter = modelParameter, calculationDescription = calculationDescription)
+    try:
+        survey_search_ins_req = crud.survey_search_insert_request.create(db=db, obj_in=create_object)
+        return survey_search_ins_req.id
+    except Exception as e:
+        logger.error(f"{searchId}: storing in db failed : {e}")
+
+def create_survey_search_update_request(db: Session, id,  searchId: str, answer: Optional[str], calculationDescription: Optional[str]):
+    """
+
+    :param answer:
+    :param calculationDescription:
+    :param search_id:
+    :param db:
+    :return:
+    """
+    db_obj = crud.survey_search_update_request.get_by_id(db=db, id = id)
+    # db_obj = crud.survey_meta_update_request.get(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
+    update_object = SurvSearchUpReqCreate(answer = answer, calculationDescription = calculationDescription)
+    try:
+        survey_search_up_req = crud.survey_search_update_request.update(db=db, db_obj=db_obj, obj_in=update_object)
+        return survey_search_up_req.id
+    except Exception as e:
+        logger.error(f"{searchId}: updating in db failed : {e}")
 
 
 def create_survey_delete_request(db: Session, id: int):
     """
 
     :param id:
-    :param survey:
-    :param survey_id:
-    :param file_path:
-    :param org_id:
     :param db:
     :return:
     """
@@ -136,13 +240,9 @@ def create_survey_meta_update_request(db: Session, survey_req_id: int, meta_key:
                                       meta_value: str = None):
     """
 
-    :param req_id:
     :param meta_key:
     :param meta_value:
-    :param survey:
-    :param survey_id:
-    :param file_path:
-    :param org_id:
+    :param survey_req_id:
     :param db:
     :return:
     """
@@ -157,6 +257,14 @@ def create_survey_meta_update_request(db: Session, survey_req_id: int, meta_key:
 
 
 def check_if_meta_exist(db: Session, org_id: str, org: Organization):
+    """
+
+    :param org_id:
+    :param org:
+    :param db:
+    :return:
+    """
+
     org_id = org_id  # entity
     surveyList = org.surveyList
     meta_insert_list = []
@@ -186,6 +294,13 @@ def check_if_meta_exist(db: Session, org_id: str, org: Organization):
 
 
 def available_for_delete(db: Session, org_id: str, org: Organization):
+    """
+
+    :param org_id:
+    :param org:
+    :param db:
+    :return:
+    """
     org_id = org_id
     surveyList = org.surveyList
     survey_delete_list = []
@@ -210,6 +325,11 @@ def available_for_delete(db: Session, org_id: str, org: Organization):
 
 
 def delete_survey_from_s3(s3_list):
+    """
+
+    :param s3_list:
+    :return:
+    """
     failed_s3 = []
     for s3_path in s3_list:
         csv_path = s3_path
@@ -219,8 +339,12 @@ def delete_survey_from_s3(s3_list):
             logging.error(f"s3 folder failed to delete : {s3_path}")
     return failed_s3
 
-
 def get_keys(survey: Survey):
+    """
+
+    :param survey:
+    :return:
+    """
     data = {}
     survey_data = survey.surveyData
     key_list = []
@@ -230,8 +354,36 @@ def get_keys(survey: Survey):
     data["keys"] = sorted(key_list)
     return data
 
+def get_status(db: Session, org_id: str, survey_id:str, db_object:SurveyInsertRequest):
+
+    status = {}
+    json_file = "survey_data_" + org_id + "_" + survey_id + "_keys.json"
+    csv_path = "survey_data/" + org_id + "/" + survey_id + "/"
+    json_file_path = csv_path + json_file
+    req_id = db_object.id
+    meta_list = []
+    all_meta = get_meta(db= db, req_id= req_id) #: List[SurveyMetaInsertRequest]
+    # print(all_meta)
+    if all_meta:
+        for obj in all_meta:
+            meta_list.append({"metaKey" : obj.metaKey, "value" : obj.metaValue})
+
+        status["numberDataItems"] = db_object.total_no_of_rows
+        status.update(prefix_exists(json_file_path))
+        status["metaData"] = meta_list
+
+        return status
+    else:
+        return False
+
 
 def add_csv_to_s3(org_id: str, survey: Survey):
+    """
+
+    :param org_id:
+    :param survey:
+    :return:
+    """
     now = datetime.now()
     date = now.strftime("%d-%m-%Y")
     time = now.strftime("%H:%M:%S")
@@ -250,7 +402,7 @@ def add_csv_to_s3(org_id: str, survey: Survey):
     if data_keys:
         if data_keys != json_keys:
             logger.error(f"{survey_id}: Survey_id already exists for the org_id and keys are not same")
-            return None, None, True
+            return None, None, None
 
     survey_description = survey.surveyDescription  # entity
     # store meta in dictionary
@@ -286,7 +438,7 @@ def add_csv_to_s3(org_id: str, survey: Survey):
             else:
                 return None, None, True
         else:
-            return None, None,
+            return None, None, False
     except Exception as e:
         logger.error(f"{survey_id}: storing in s3 failed : {e}")
         return None, None, None

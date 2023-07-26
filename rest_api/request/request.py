@@ -44,6 +44,17 @@ class SurveyMeta(BaseModel):
 class DataSurvey(BaseModel):
     surveyId: str
 
+class Model(BaseModel):
+    temperature : int
+    outputTokenLength : int
+
+class Option(BaseModel):
+    option : str
+    remarks: str
+
+class Feedback(BaseModel):
+    like : Option
+    dislike: Option
 
 class Organization(BaseModel):
     surveyList: List[Survey]
@@ -55,3 +66,17 @@ class OrganizationMeta(BaseModel):
 
 class OrganizationSurvey(BaseModel):
     surveyList: List[DataSurvey]
+
+class OrganizationSearch(BaseModel):
+    question : str
+    surveyList : List[DataSurvey]
+    filters : str 
+    modelParameters : Model
+
+class OrganizationStatus(BaseModel):
+    surveyId : str
+
+class OrganizationFeedback(BaseModel):
+    searchId: str
+    feedback: str
+    feedbackDetails : Feedback

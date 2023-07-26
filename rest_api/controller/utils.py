@@ -81,9 +81,8 @@ def prefix_exists(json_file_path):
 def write_json_to_s3(json_file_path: str, json_object: dict):
     """
 
-    :param csv_buffer:
-    :param csv_path:
-    :param csv_file_path:
+    :param json_object:
+    :param json_file_path:
     :return:
     """
     s3_client = get_s3_client()
@@ -117,9 +116,7 @@ def write_files_to_s3(csv_file_path: str, csv_buffer, csv_path: str):
 def delete_folder_from_s3(csv_path: str):
     """
 
-    :param csv_buffer:
     :param csv_path:
-    :param csv_file_path:
     :return:
     """
     s3_client = get_s3_client()

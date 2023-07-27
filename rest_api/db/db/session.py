@@ -10,6 +10,6 @@ def SessionLocal():
 
     :return:
     """
-    engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_recycle=1600)
+    engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_recycle=1600, pool_pre_ping=True)
     ORMBase.metadata.create_all(engine)
     return scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))

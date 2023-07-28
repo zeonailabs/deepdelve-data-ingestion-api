@@ -31,7 +31,7 @@ def check_if_survey_id_exist(db, org_id: str, survey_id: str):
     if dbj:
         return dbj
     else:
-        return False
+        return None
 
 
 def get_id_for_survey(db: Session, org_id: str, survey_id: str):
@@ -46,7 +46,7 @@ def get_id_for_survey(db: Session, org_id: str, survey_id: str):
     if Id:
         return Id
     else:
-        return False
+        return None
 
 def check_if_search_id_exists(db: Session, search_id: str):
     """
@@ -60,7 +60,7 @@ def check_if_search_id_exists(db: Session, search_id: str):
     if Id:
         return Id
     else:
-        return False
+        return None
 
 def get_s3_for_survey(db, org_id: str, survey_id: str):
     """
@@ -74,7 +74,7 @@ def get_s3_for_survey(db, org_id: str, survey_id: str):
     if db_obj:
         return db_obj.s3_file_path
     else:
-        return False
+        return None
 
 def get_meta(db:Session, req_id: int):
     """
@@ -88,7 +88,7 @@ def get_meta(db:Session, req_id: int):
     if dbj:
         return dbj
     else:
-        return False
+        return None
     
 def check_if_meta_of_survey_id_exist(db, req_id: int, meta_key: str):
     """
@@ -124,6 +124,7 @@ def create_survey_insert_request(db: Session, org_id: str, survey_id: str, surve
         return survey_ins_req.id
     except Exception as e:
         logger.error(f"{survey_id}: storing in db failed : {e}")
+        return None
     
 def create_survey_feedback_insert_request(db: Session, searchId :str, searchReqId : int, feedback: str, option: str, remarks : str):
     """
@@ -142,6 +143,7 @@ def create_survey_feedback_insert_request(db: Session, searchId :str, searchReqI
         return survey_feed_ins_req.id
     except Exception as e:
         logger.error(f"{searchId}: storing in db failed : {e}")
+        return None
 
 def create_survey_update_request(db: Session, org_id: str, survey_id: str,  total_no_of_rows: int = 0):
     """
@@ -158,6 +160,7 @@ def create_survey_update_request(db: Session, org_id: str, survey_id: str,  tota
         return survey_up_req.id
     except Exception as e:
         logger.error(f"{survey_id}: storing in db failed : {e}")
+        return None
 
 def create_search_insert_request(db: Session, searchId : str, orgId: str, question: str, answer: Optional[str],
                                   inputSurveyIdList : Optional[str], filters : Optional[str], filteredSurveyIdList: Optional[str], 
@@ -184,6 +187,7 @@ def create_search_insert_request(db: Session, searchId : str, orgId: str, questi
         return survey_search_ins_req.id
     except Exception as e:
         logger.error(f"{searchId}: storing in db failed : {e}")
+        return None
 
 def create_survey_search_update_request(db: Session, id,  searchId: str, answer: Optional[str], calculationDescription: Optional[str]):
     """
@@ -202,6 +206,7 @@ def create_survey_search_update_request(db: Session, id,  searchId: str, answer:
         return survey_search_up_req.id
     except Exception as e:
         logger.error(f"{searchId}: updating in db failed : {e}")
+        return None
 
 
 def create_survey_delete_request(db: Session, id: int):
@@ -216,6 +221,7 @@ def create_survey_delete_request(db: Session, id: int):
         return survey_delete_req.id
     except Exception as e:
         logger.error(f"{id}: deleting in db failed : {e}")
+        return None
 
 
 def create_survey_meta_insert_request(db: Session, survey_req_id: int, meta_key: str = None,
@@ -234,6 +240,7 @@ def create_survey_meta_insert_request(db: Session, survey_req_id: int, meta_key:
         return survey_meta_ins_req.id
     except Exception as e:
         logger.error(f"{survey_req_id}: storing in db failed : {e}")
+        return None
 
 
 def create_survey_meta_update_request(db: Session, survey_req_id: int, meta_key: str = None,
@@ -254,6 +261,7 @@ def create_survey_meta_update_request(db: Session, survey_req_id: int, meta_key:
         return survey_meta_up_req.id
     except Exception as e:
         logger.error(f"{survey_req_id}: updating in db failed : {e}")
+        return None
 
 
 def check_if_meta_exist(db: Session, org_id: str, org: Organization):
@@ -374,7 +382,7 @@ def get_status(db: Session, org_id: str, survey_id:str, db_object:SurveyInsertRe
 
         return status
     else:
-        return False
+        return None
 
 
 def add_csv_to_s3(org_id: str, survey: Survey):

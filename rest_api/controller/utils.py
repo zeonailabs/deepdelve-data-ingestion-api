@@ -72,11 +72,11 @@ def prefix_exists(json_file_path):
             json_text_object = json.loads(json_text)
             return json_text_object
         else:
-            return False
+            return None
     
     except ClientError as ce:
         logging.error(ce)
-    return False
+        return None
 
 def write_json_to_s3(json_file_path: str, json_object: dict):
     """

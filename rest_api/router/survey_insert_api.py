@@ -46,6 +46,9 @@ async def submit_survey(response: Response, org: Organization,
         no_of_rows = len(survey.surveyData)
         print(no_of_rows)
         meta_list, surv_dict, survey_present = add_csv_to_s3(org_id=org_id, survey=survey)
+        print(meta_list)
+        print(surv_dict)
+        print(survey_present)
         if surv_dict:
             surv_ins_id = create_survey_insert_request(db=db, org_id=org_id, survey_id=survey.surveyId,
                                                        survey_description=surv_dict["surveyDescription"],
@@ -74,7 +77,6 @@ async def submit_survey(response: Response, org: Organization,
                 success_surv.append({"id": survey.surveyId})
             else:
                 failed_surv.append({"id": survey.surveyId})
-            
         else:
             failed_surv.append({"id": survey.surveyId})
 

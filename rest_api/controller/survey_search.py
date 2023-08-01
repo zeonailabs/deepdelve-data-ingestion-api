@@ -183,84 +183,136 @@ def get_filtered_lists(filters: str):
         for filter_dict_filt in filters.get('|', []):
             # print(filter_dict_filt)
             for filter_dict in filter_dict_filt.get('|',[]):
+                filt = []
                 column_name = filter_dict['key']
                 if filter_dict.get('value') != None:
                     value = filter_dict['value']
                 dtype = filter_dict['dtype']
                 # print(column_name, " ", dtype)
                 if dtype == 'string':
-                    or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) == value)
+                    or_filters.append(and_(*filt))
+                    #or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
                 if dtype == 'numeric' and operation:
                     if operation['type'] == 'range':
                         lower = operation['lower']
                         upper = operation['upper']
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2).between(lower, upper))
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2).between(lower, upper))
+                        or_filters.append(and_(*filt))
                     elif operation['type'] == '>=':
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) >= value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) >= value)
+                        or_filters.append(and_(*filt))
                     elif operation['type'] == '<=':
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) <= value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) <= value)
+                        or_filters.append(and_(*filt))
                     elif operation['type'] == '<':
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) < value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) < value)
+                        or_filters.append(and_(*filt))
                     elif operation['type'] == '>':
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) > value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) > value)
+                        or_filters.append(and_(*filt))
                     elif operation['type'] == '=':
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) == value)
+                        or_filters.append(and_(*filt))
                     elif operation['type'] == '!':
-                        or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) != value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) != value)
+                        or_filters.append(and_(*filt))
             not_filters = []
             for filter_dict in filter_dict_filt.get('!', []):
+                filt = []
                 column_name = filter_dict['key']
                 if filter_dict.get('value') != None:
                     value = filter_dict['value']
                 dtype = filter_dict['dtype']
                 # print(column_name, " ", dtype)
                 if dtype == 'string':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) != value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) != value)
+                    not_filters.append(and_(*filt))
                 if dtype == 'numeric' and operation:
                     if operation['type'] == 'range':
                         lower = operation['lower']
                         upper = operation['upper']
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2).between(lower, upper))
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2).between(lower, upper))
+                        not_filters.append(and_(*filt))
                     elif operation['type'] == '>=':
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) >= value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) >= value)
+                        not_filters.append(and_(*filt))
                     elif operation['type'] == '<=':
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) <= value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) <= value)
+                        not_filters.append(and_(*filt))
                     elif operation['type'] == '<':
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) < value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) < value)
+                        not_filters.append(and_(*filt))
                     elif operation['type'] == '>':
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) > value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) > value)
+                        not_filters.append(and_(*filt))
                     elif operation['type'] == '=':
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) == value)
+                        not_filters.append(and_(*filt))
                     elif operation['type'] == '!':
-                        not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) != value)
+                        filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                        filt.append(getattr(SurveyMetaInsertRequest, col2) != value)
+                        not_filters.append(and_(*filt))
             if not_filters:
-                or_filters.append(not_(not_filters))
+                or_filters.append(not_(*not_filters))
 
         not_filters = []
         for filter_dict in filters.get('!', []):
+            filt = []
             column_name = filter_dict['key']
             if filter_dict.get('value') != None:
                 value = filter_dict['value']
             dtype = filter_dict['dtype']
             if dtype == 'string':
-                not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) != value)
+                filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                filt.append(getattr(SurveyMetaInsertRequest, col2) != value)
+                not_filters.append(and_(*filt))
             if dtype == 'numeric' and operation:
                 if operation['type'] == 'range':
                     lower = operation['lower']
                     upper = operation['upper']
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2).between(lower, upper))
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2).between(lower, upper))
+                    not_filters.append(and_(*filt))
                 elif operation['type'] == '>=':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) >= value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) >= value)
+                    not_filters.append(and_(*filt))
                 elif operation['type'] == '<=':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) <= value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) <= value)
+                    not_filters.append(and_(*filt))
                 elif operation['type'] == '<':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) < value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) < value)
+                    not_filters.append(and_(*filt))
                 elif operation['type'] == '>':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) > value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) > value)
+                    not_filters.append(and_(*filt))
                 elif operation['type'] == '=':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) == value)
+                    not_filters.append(and_(*filt))
                 elif operation['type'] == '!':
-                    not_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) != value)
+                    filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
+                    filt.append(getattr(SurveyMetaInsertRequest, col2) != value)
+                    not_filters.append(and_(*filt))
 
         return [and_filters, or_filters, not_filters]
     except Exception as e:

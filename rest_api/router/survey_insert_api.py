@@ -3,12 +3,17 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from rest_api.request.request import Organization, OrganizationMeta, OrganizationSurvey, OrganizationSearch, OrganizationStatus, OrganizationFeedback
-from rest_api.response.response import InsertAPIResponse, UpdateAPIResponse, DeleteAPIResponse, Message, SearchAPIResponse, StatusAPIResponse, FeedbackAPIResponse
-from rest_api.controller.survey_insert import check_if_search_id_exists, create_survey_feedback_insert_request, get_status, check_if_survey_id_exist, create_survey_update_request, add_csv_to_s3, available_for_delete, create_survey_insert_request, \
+from rest_api.request.request import Organization, OrganizationMeta, OrganizationSurvey, OrganizationSearch, \
+    OrganizationStatus, OrganizationFeedback
+from rest_api.response.response import InsertAPIResponse, UpdateAPIResponse, DeleteAPIResponse, Message, \
+    SearchAPIResponse, StatusAPIResponse, FeedbackAPIResponse
+from rest_api.controller.survey_insert import check_if_search_id_exists, create_survey_feedback_insert_request, \
+    get_status, check_if_survey_id_exist, create_survey_update_request, add_csv_to_s3, available_for_delete, \
+    create_survey_insert_request, \
     create_survey_delete_request, create_survey_meta_insert_request, create_survey_meta_update_request, \
     check_if_meta_exist, delete_survey_from_s3, create_search_insert_request, create_survey_search_update_request
-from rest_api.controller.survey_search import get_all_survey, check_survey_for_filters, get_filtered_lists, predict_with_lambda
+from rest_api.controller.survey_search import get_all_survey, check_survey_for_filters, get_filtered_lists, \
+    predict_with_lambda
 from rest_api.controller import get_survey_db
 from rest_api.router import auth_token
 from rest_api.config import LOG_LEVEL, SUPPORTED_DATA_SIZE, VERSION
@@ -53,11 +58,11 @@ async def submit_survey(response: Response, org: Organization,
             surv_ins_id = create_survey_insert_request(db=db, org_id=org_id, survey_id=survey.surveyId,
                                                        survey_description=surv_dict["surveyDescription"],
                                                        file_path=surv_dict["survey_s3_file_path"],
-                                                       total_no_of_rows= no_of_rows)
+                                                       total_no_of_rows=no_of_rows)
             if not surv_ins_id:
                 logger.error(f"{unique_id}: survey insert failed")
                 return JSONResponse(status_code=501, content={"message": "survey insert failed"})
-            
+
             for dict in meta_list:
                 meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=surv_ins_id,
                                                                 meta_key=dict["metaKey"],
@@ -67,10 +72,11 @@ async def submit_survey(response: Response, org: Organization,
                     return JSONResponse(status_code=501, content={"message": "meta insert failed"})
             success_surv.append({"id": survey.surveyId})
         elif survey_present:
-            dbj = check_if_survey_id_exist(db =db , org_id= org_id, survey_id = survey.surveyId)
+            dbj = check_if_survey_id_exist(db=db, org_id=org_id, survey_id=survey.surveyId)
             if dbj:
                 prev_no = dbj.total_no_of_rows or 0
-                surv_ins_id = create_survey_update_request(db=db, org_id= org_id, survey_id = survey.surveyId, total_no_of_rows= no_of_rows+prev_no)
+                surv_ins_id = create_survey_update_request(db=db, org_id=org_id, survey_id=survey.surveyId,
+                                                           total_no_of_rows=no_of_rows + prev_no)
                 if not surv_ins_id:
                     logger.error(f"{unique_id}: survey update failed")
                     return JSONResponse(status_code=501, content={"message": "survey update failed"})
@@ -108,7 +114,7 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
             if not meta_ins_id:
                 logger.error(f"{unique_id}: meta update failed")
                 return JSONResponse(status_code=501, content={"message": "meta update failed"})
-            
+
         # todo - populate the database for meta
         for dict in meta_insert_list:
             meta_ins_id = create_survey_meta_insert_request(db=db, survey_req_id=dict["surveyReqId"],
@@ -116,7 +122,7 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
             if not meta_ins_id:
                 logger.error(f"{unique_id}: meta insert failed")
                 return JSONResponse(status_code=501, content={"message": "meta insert failed"})
-            
+
         return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
                 "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}
     else:
@@ -125,7 +131,7 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/delete", response_model=DeleteAPIResponse,
-             responses={400: {"model": Message}, 410: {"model": Message}, 501: {"model": Message}},
+             responses={400: {"model": Message}, 501: {"model": Message}},
              response_model_exclude_unset=True)
 async def delete_survey(response: Response, org: OrganizationSurvey,
                         db: Session = Depends(get_survey_db.get_db),
@@ -188,32 +194,40 @@ async def search_survey(response: Response, org: OrganizationSearch,
     surveyList = []
     for surv in survey:
         surveyList.append(surv.surveyId)
-    
+
     if not surveyList:
-        surveyIdListDict, surveyIdList, surveys3List = get_all_survey(db = db, filters = filters)
-    
+        surveyIdListDict, surveyIdList, surveys3List = get_all_survey(db=db, filters=filters)
+
     else:
-        surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db = db , filters = filters, surveyList = surveyList)
-    
+        surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db=db, filters=filters,
+                                                                                surveyList=surveyList)
+
     if surveys3List:
-        req_id = create_search_insert_request(db = db, searchId= unique_id, orgId= org_id, question= question, answer = "answer not found", inputSurveyIdList= str(surveyList), filters= filters_str, filteredSurveyIdList= str(surveyIdList), modelParameter= str(model_parameters.__dict__), calculationDescription= "description not found" )
-        #todo - call answer lambda 
-        test_event = {"request_id": unique_id, "question": question, "s3_paths": surveys3List, "modelParameters":model_parameters.__dict__}
-        response = predict_with_lambda(event= test_event)
+        req_id = create_search_insert_request(db=db, searchId=unique_id, orgId=org_id, question=question,
+                                              answer="answer not found", inputSurveyIdList=str(surveyList),
+                                              filters=filters_str, filteredSurveyIdList=str(surveyIdList),
+                                              modelParameter=str(model_parameters.__dict__),
+                                              calculationDescription="description not found")
+        # todo - call answer lambda
+        test_event = {"request_id": unique_id, "question": question, "s3_paths": surveys3List,
+                      "modelParameters": model_parameters.__dict__}
+        response = predict_with_lambda(event=test_event)
         if not response:
             logger.error(f"{unique_id}: answer not fetched from lambda")
             return JSONResponse(status_code=501, content={"message": "answer not fetched from lambda"})
-        
+
         answer = response["body"]["output"]["answer"]
         cal_desc = response["body"]["output"]["calculation_description"]
-        up_req_id = create_survey_search_update_request(db = db, id= req_id, searchId= unique_id , answer= answer , calculationDescription= cal_desc)
-        return {"status": {"success": True, "code": 200}, "message": "Request successfully received, search successfully done",
+        up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer=answer,
+                                                        calculationDescription=cal_desc)
+        return {"status": {"success": True, "code": 200},
+                "message": "Request successfully received, search successfully done",
                 "answer": answer or "", "surveyList": surveyIdListDict}
-        
+
     else:
         logger.error(f" no survey found for this filter: {filters}")
-        return JSONResponse(status_code=501, content={"message": "no survey found for this filter, filters search Unsuccessful"})
-    
+        return JSONResponse(status_code=501,
+                            content={"message": "no survey found for this filter, filters search Unsuccessful"})
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/status", response_model=StatusAPIResponse,
@@ -232,27 +246,30 @@ async def survey_status(response: Response, org: OrganizationStatus,
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
     survey_id = org.surveyId
-    survey_present = check_if_survey_id_exist(db=db, org_id= org_id, survey_id= survey_id)
+    survey_present = check_if_survey_id_exist(db=db, org_id=org_id, survey_id=survey_id)
     if survey_present:
         # todo - populate the database for survey and meta
-        resp = get_status(db =db, org_id = org_id, survey_id = survey_id, db_object= survey_present)
+        resp = get_status(db=db, org_id=org_id, survey_id=survey_id, db_object=survey_present)
         if not resp:
             logger.error(f"{unique_id}: no survey data found")
             return JSONResponse(status_code=501, content={"message": "Find Survey Data Status Unsuccessful"})
-        
-        return {"status": {"success": True, "code": 200}, "message": f"Request successfully received, survey found for survey_id {survey_id}",
+
+        return {"status": {"success": True, "code": 200},
+                "message": f"Request successfully received, survey found for survey_id {survey_id}",
                 "dataPresent": True, "surveyData": resp}
     else:
         logger.error(f"{unique_id}: no survey found")
-        return {"status": {"success": True, "code": 200}, "message": f"Request successfully received, survey NOT found for survey_id {survey_id}",
+        return {"status": {"success": True, "code": 200},
+                "message": f"Request successfully received, survey NOT found for survey_id {survey_id}",
                 "dataPresent": False, "surveyData": {}}
+
 
 @router.post("/" + VERSION + "/deepdelve/survey/feedback", response_model=FeedbackAPIResponse,
              responses={400: {"model": Message}, 501: {"model": Message}},
              response_model_exclude_unset=True)
 async def survey_feedback(response: Response, org: OrganizationFeedback,
-                        db: Session = Depends(get_survey_db.get_db),
-                        current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
+                          db: Session = Depends(get_survey_db.get_db),
+                          current_user: auth_token.User = Depends(auth_token.get_current_active_user)):
     unique_id = str(uuid4())
     org_id = current_user.org_id  # entity
     # org_id = "1001" # entity
@@ -265,7 +282,7 @@ async def survey_feedback(response: Response, org: OrganizationFeedback,
     search_id = org.searchId
     feedback = org.feedback
     feedback_details = org.feedbackDetails
-    search_req_id = check_if_search_id_exists(db = db, search_id = search_id)
+    search_req_id = check_if_search_id_exists(db=db, search_id=search_id)
     if search_req_id:
         if feedback == "like":
             option = feedback_details.like.option
@@ -273,10 +290,11 @@ async def survey_feedback(response: Response, org: OrganizationFeedback,
         elif feedback == "dislike":
             option = feedback_details.dislike.option
             remark = feedback_details.dislike.remarks
-        if len(remark) >1000:
+        if len(remark) > 1000:
             logger.error(f"{unique_id}: remark is larger than 1000 character")
             return JSONResponse(status_code=400, content={"message": "Remark larger than 1000 character"})
-        feed_id = create_survey_feedback_insert_request(db =db, searchId = search_id, searchReqId = search_req_id[0], feedback = feedback, option = option, remarks = remark)
+        feed_id = create_survey_feedback_insert_request(db=db, searchId=search_id, searchReqId=search_req_id[0],
+                                                        feedback=feedback, option=option, remarks=remark)
         if not feed_id:
             logger.error(f"{unique_id}: feedback storing failed")
             return JSONResponse(status_code=501, content={"message": "Find Survey Data Status Unsuccessful"})

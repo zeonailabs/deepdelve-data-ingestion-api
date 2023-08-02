@@ -183,25 +183,29 @@ async def search_survey(response: Response, org: OrganizationSearch,
     question = org.question
     filters_str = org.filters
     model_parameters = org.modelParameters
-    if not filters_str:
-        logger.error(f"{unique_id}: Null filters in search request")
-        return JSONResponse(status_code=400, content={"message": "Empty filters in payload"})
-    filters = get_filtered_lists(filters_str)
-    if not filters:
-        logger.error(f"{unique_id}: filters not processed successfully")
-        return JSONResponse(status_code=501, content={"message": "filters not processed successfully"})
     survey = org.surveyList
     surveyList = []
     for surv in survey:
         surveyList.append(surv.surveyId)
 
-    if not surveyList:
-        surveyIdListDict, surveyIdList, surveys3List = get_all_survey(db=db, filters=filters)
-
-    else:
-        surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db=db, filters=filters,
-                                                                                surveyList=surveyList)
-
+    if not filters_str:
+        if not surveyList:
+            logger.error(f"{unique_id}: Null filters in search request")
+            return JSONResponse(status_code=400, content={"message": "Empty filters and survey_list in payload"})
+        elif surveyList:
+            surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db = db , org_id = org_id, filters = None, surveyList = surveyList)
+            # print(surveyIdListDict, surveyIdList, surveys3List)
+    elif filters_str:
+        filters = get_filtered_lists(filters_str)
+        if not filters:
+            logger.error(f"{unique_id}: filters not processed successfully")
+            return JSONResponse(status_code=501, content={"message": "filters not processed successfully"})
+        if not surveyList:
+            surveyIdListDict, surveyIdList, surveys3List = get_all_survey(db = db, org_id = org_id, filters = filters)
+        
+        else:
+            surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db = db , org_id = org_id, filters = filters, surveyList = surveyList)
+    
     if surveys3List:
         req_id = create_search_insert_request(db=db, searchId=unique_id, orgId=org_id, question=question,
                                               answer="answer not found", inputSurveyIdList=str(surveyList),

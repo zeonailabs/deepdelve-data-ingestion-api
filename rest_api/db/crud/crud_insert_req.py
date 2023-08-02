@@ -15,8 +15,8 @@ class CRUDSurvInsReq(CRUDBase[SurveyInsertRequest, SurvInsReqCreate, SurvUpReqCr
     def get_id(self, db: Session, org_id: str, survey_id: str):
         return db.query(self.model.id).filter((self.model.orgId == org_id) & (self.model.surveyId == survey_id)).first()
 
-    def get_all_req_id(self, db: Session, req_ids: tuple):
-        return db.query(self.model).filter((self.model.id.in_(req_ids))).all()
+    def get_all_req_id(self, db: Session, org_id: str, req_ids: tuple):
+        return db.query(self.model).filter(self.model.orgId == org_id).filter((self.model.id.in_(req_ids))).all()
 
 
 survey_insert_request = CRUDSurvInsReq(SurveyInsertRequest)
@@ -47,6 +47,8 @@ class CRUDSurvMetaInsReq(CRUDBase[SurveyMetaInsertRequest, SurvMetaInsReqCreate,
         else:
             return db.query(self.model.surveyReqId).filter(and_(*filters[0])).filter(or_(*filters[1])).all()
 
+    def get_all_req_id_for_meta(self, db: Session):
+        return db.query(self.model.surveyReqId).distinct().all()
 
 survey_meta_insert_request = CRUDSurvMetaInsReq(SurveyMetaInsertRequest)
 survey_meta_update_request = CRUDSurvMetaInsReq(SurveyMetaInsertRequest)

@@ -318,7 +318,7 @@ def get_filtered_lists(filters: str):
     except Exception as e:
         return None
 
-def get_all_survey(db: Session, filters):
+def get_all_survey(db: Session, org_id: str, filters):
     """
 
     :param req_id:
@@ -327,7 +327,11 @@ def get_all_survey(db: Session, filters):
     :return:
     """
 
-    surv_req_id_list = crud.survey_meta_insert_request.get_req_id_for_meta(db=db, filters = filters)
+    if filters:
+        surv_req_id_list = crud.survey_meta_insert_request.get_req_id_for_meta(db=db, filters = filters)
+    else:
+        surv_req_id_list = crud.survey_meta_insert_request.get_all_req_id_for_meta(db=db)
+    
     if surv_req_id_list:
         surveyIdList = []
         surveys3List = []
@@ -335,7 +339,7 @@ def get_all_survey(db: Session, filters):
         surveys = []
         for req_ids in surv_req_id_list:
             # print(req_ids)
-            surv = crud.survey_insert_request.get_all_req_id(db= db, req_ids= req_ids)
+            surv = crud.survey_insert_request.get_all_req_id(db= db, org_id = org_id, req_ids= req_ids)
             if surv:
                 surveys.append(surv)
         if surveys:
@@ -352,8 +356,8 @@ def get_all_survey(db: Session, filters):
     else:
         return None, None, None
 
-def check_survey_for_filters(db: Session, filters, surveyList: list):
-    temp_surveyIdListDict, temp_surveyIdList, temp_surveys3List = get_all_survey(db= db, filters= filters)
+def check_survey_for_filters(db: Session, org_id: str, filters, surveyList: list):
+    temp_surveyIdListDict, temp_surveyIdList, temp_surveys3List = get_all_survey(db= db, org_id= org_id, filters= filters)
     # print(surveyList)
     if temp_surveys3List:
         surveyIdListDict = []

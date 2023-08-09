@@ -1,4 +1,4 @@
-from rest_api.config import LOG_LEVEL, S3_BUCKET, S3_ACCESS_KEY_ID,S3_SECRET_KEY, AWS_REGION_VALUE
+from rest_api.config import LOG_LEVEL, S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_KEY, AWS_REGION_VALUE
 from rest_api.request.request import Organization, Survey
 from rest_api.db.models.survey_insert_request import SurveyInsertRequest, SurveyMetaInsertRequest
 from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, \
@@ -21,6 +21,7 @@ import json
 df = pd.DataFrame()
 logger = logging.getLogger('survey_insert')
 logger.setLevel(LOG_LEVEL)
+
 
 def parser(filters: str):
     """
@@ -75,8 +76,8 @@ def parser(filters: str):
 
     return dic_and
 
-def parsed_by_parts(filtr_lst: List):
 
+def parsed_by_parts(filtr_lst: List):
     """
     helper function for parser function. To induct datatype , and other parameters.
     ex-
@@ -136,11 +137,12 @@ def parsed_by_parts(filtr_lst: List):
 
     return filtr_lst
 
+
 def get_filtered_lists(filters: str):
     # Create the filter expressions
     # filters = defaultdict(list, {'&': [{'key': 'categories', 'value': 'politics', 'dtype': 'string'}, {'key': 'store', 'value': 'The Corner Bookshop', 'dtype': 'string'}], '|': [], '!': []})
     try:
-        filters = parser(filters= filters)
+        filters = parser(filters=filters)
         and_filters = []
         col1 = "metaKey"
         col2 = "metaValue"
@@ -153,7 +155,7 @@ def get_filtered_lists(filters: str):
             operation = filter_dict.get('operation')
             if dtype == 'string':
                 and_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
-                and_filters.append(getattr(SurveyMetaInsertRequest, col2)== value)
+                and_filters.append(getattr(SurveyMetaInsertRequest, col2) == value)
             if dtype == 'numeric' and operation:
                 if operation['type'] == 'range':
                     lower = operation['lower']
@@ -182,7 +184,7 @@ def get_filtered_lists(filters: str):
         or_filters = []
         for filter_dict_filt in filters.get('|', []):
             # print(filter_dict_filt)
-            for filter_dict in filter_dict_filt.get('|',[]):
+            for filter_dict in filter_dict_filt.get('|', []):
                 filt = []
                 column_name = filter_dict['key']
                 if filter_dict.get('value') != None:
@@ -193,7 +195,7 @@ def get_filtered_lists(filters: str):
                     filt.append(getattr(SurveyMetaInsertRequest, col1) == column_name)
                     filt.append(getattr(SurveyMetaInsertRequest, col2) == value)
                     or_filters.append(and_(*filt))
-                    #or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
+                    # or_filters.append(getattr(SurveyMetaInsertRequest, col1) == column_name and getattr(SurveyMetaInsertRequest, col2) == value)
                 if dtype == 'numeric' and operation:
                     if operation['type'] == 'range':
                         lower = operation['lower']
@@ -318,6 +320,7 @@ def get_filtered_lists(filters: str):
     except Exception as e:
         return None
 
+
 def get_all_survey(db: Session, org_id: str, filters):
     """
 
@@ -328,10 +331,10 @@ def get_all_survey(db: Session, org_id: str, filters):
     """
 
     if filters:
-        surv_req_id_list = crud.survey_meta_insert_request.get_req_id_for_meta(db=db, filters = filters)
+        surv_req_id_list = crud.survey_meta_insert_request.get_req_id_for_meta(db=db, filters=filters)
     else:
         surv_req_id_list = crud.survey_meta_insert_request.get_all_req_id_for_meta(db=db)
-    
+
     if surv_req_id_list:
         surveyIdList = []
         surveys3List = []
@@ -339,7 +342,7 @@ def get_all_survey(db: Session, org_id: str, filters):
         surveys = []
         for req_ids in surv_req_id_list:
             print(req_ids)
-            surv = crud.survey_insert_request.get_all_req_id(db= db, org_id = org_id, req_ids= req_ids)
+            surv = crud.survey_insert_request.get_all_req_id(db=db, org_id=org_id, req_ids=req_ids)
             if surv:
                 surveys.append(surv)
         if surveys:
@@ -348,7 +351,7 @@ def get_all_survey(db: Session, org_id: str, filters):
                     print(surv.s3_file_path)
                     print(surv.surveyId)
                     surveyIdList.append(surv.surveyId)
-                    surveyIdListDict.append({"surveyId" : surv.surveyId})
+                    surveyIdListDict.append({"surveyId": surv.surveyId})
                     surveys3List.append(surv.s3_file_path)
             return surveyIdListDict, surveyIdList, surveys3List
         else:
@@ -356,24 +359,26 @@ def get_all_survey(db: Session, org_id: str, filters):
     else:
         return None, None, None
 
+
 def check_survey_for_filters(db: Session, org_id: str, filters, surveyList: list):
-    temp_surveyIdListDict, temp_surveyIdList, temp_surveys3List = get_all_survey(db= db, org_id= org_id, filters= filters)
+    temp_surveyIdListDict, temp_surveyIdList, temp_surveys3List = get_all_survey(db=db, org_id=org_id, filters=filters)
     # print(surveyList)
     if temp_surveys3List:
         surveyIdListDict = []
         surveyIdList = []
         surveys3List = []
-        for i,id in enumerate(temp_surveyIdList):
+        for i, id in enumerate(temp_surveyIdList):
             if id in surveyList:
                 # print(id, " ", temp_surveys3List[i])
-                surveyIdListDict.append({"surveyId" : id})
+                surveyIdListDict.append({"surveyId": id})
                 surveyIdList.append(id)
                 surveys3List.append(temp_surveys3List[i])
-        return surveyIdListDict, surveyIdList,surveys3List
+        return surveyIdListDict, surveyIdList, surveys3List
     else:
         return None, None, None
 
-def predict_with_lambda(event : dict):
+
+def predict_with_lambda(event: dict):
     """
     use model in tabular lambda
     """
@@ -386,7 +391,7 @@ def predict_with_lambda(event : dict):
             'max_attempts': 1,
             'mode': 'standard',
         },
-        read_timeout=840, 
+        read_timeout=840,
         connect_timeout=600
     )
 
@@ -403,7 +408,7 @@ def predict_with_lambda(event : dict):
         )
         ans = json.loads(response['Payload'].read().decode("utf-8"))
         return ans
-    
+
     except Exception as e:
         logging.error(e)
         return ""

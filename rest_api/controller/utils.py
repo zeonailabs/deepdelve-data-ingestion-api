@@ -62,6 +62,7 @@ def write_file_to_s3(file_obj, bucket_name: str, org_id: str, doc_id: str, file_
 
     return 's3://' + bucket_name + '/' + file_path
 
+
 def prefix_exists(json_file_path):
     s3_client = get_s3_client()
 
@@ -73,10 +74,11 @@ def prefix_exists(json_file_path):
             return json_text_object
         else:
             return None
-    
+
     except ClientError as ce:
         logging.error(ce)
         return None
+
 
 def write_json_to_s3(json_file_path: str, json_object: dict):
     """
@@ -93,6 +95,7 @@ def write_json_to_s3(json_file_path: str, json_object: dict):
     except ClientError as e:
         logging.error(e)
         return ""
+
 
 def write_files_to_s3(csv_file_path: str, csv_buffer, csv_path: str):
     """
@@ -112,6 +115,7 @@ def write_files_to_s3(csv_file_path: str, csv_buffer, csv_path: str):
         logging.error(e)
         # print("s3 unsuccessfull")
         return ""
+
 
 def delete_folder_from_s3(csv_path: str):
     """

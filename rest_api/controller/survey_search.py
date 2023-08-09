@@ -338,15 +338,15 @@ def get_all_survey(db: Session, org_id: str, filters):
         surveyIdListDict = []
         surveys = []
         for req_ids in surv_req_id_list:
-            # print(req_ids)
+            print(req_ids)
             surv = crud.survey_insert_request.get_all_req_id(db= db, org_id = org_id, req_ids= req_ids)
             if surv:
                 surveys.append(surv)
         if surveys:
             for surv_list in surveys:
                 for surv in surv_list:
-                    # print(surv.s3_file_path)
-                    # print(surv.surveyId)
+                    print(surv.s3_file_path)
+                    print(surv.surveyId)
                     surveyIdList.append(surv.surveyId)
                     surveyIdListDict.append({"surveyId" : surv.surveyId})
                     surveys3List.append(surv.s3_file_path)
@@ -384,8 +384,10 @@ def predict_with_lambda(event : dict):
     config = Config(
         retries={
             'max_attempts': 1,
-            'mode': 'standard'
-        }
+            'mode': 'standard',
+        },
+        read_timeout=840, 
+        connect_timeout=600
     )
 
     lambda_client = session.client(

@@ -208,19 +208,42 @@ async def search_survey(response: Response, org: OrganizationSearch,
     
     if surveys3List:
         req_id = create_search_insert_request(db=db, searchId=unique_id, orgId=org_id, question=question,
-                                              answer="answer not found", inputSurveyIdList=str(surveyList),
+                                              answer="collecting answer", inputSurveyIdList=str(surveyList),
                                               filters=filters_str, filteredSurveyIdList=str(surveyIdList),
                                               modelParameter=str(model_parameters.__dict__),
-                                              calculationDescription="description not found")
+                                              calculationDescription="collecting calculation description")
         # todo - call answer lambda
         test_event = {"request_id": unique_id, "question": question, "s3_paths": surveys3List,
                       "modelParameters": model_parameters.__dict__}
+        print(test_event)
+        # response checks
         response = predict_with_lambda(event=test_event)
+        print(response)
         if not response:
-            logger.error(f"{unique_id}: answer not fetched from lambda")
-            return JSONResponse(status_code=501, content={"message": "answer not fetched from lambda"})
-
-        answer = response["body"]["output"]["answer"]
+            up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer="answer not found",
+                                                        calculationDescription="calculation description not found")
+            logger.error(f"{unique_id}: response not fetched from lambda")
+            return JSONResponse(status_code=501, content={"message": "response not fetched from lambda"})
+        
+        #code sippet for older output
+        # if response["body"]:
+        #     if response["body"]["output"] and type(response["body"]["output"]) != str :
+        #         if response["body"]["output"]["answer"]:
+        #             answer = response["body"]["output"]["answer"]
+        #         else:
+        #             answer = ""
+        #         if response["body"]["output"]["calculation_description"]:
+        #             cal_desc = response["body"]["output"]["calculation_description"]
+        #         else:
+        #             cal_desc = ""
+        #     else:
+        #         logger.error(f"{unique_id}: response[body][output] not fetched from lambda")
+        #         return JSONResponse(status_code=501, content={"message": "response[body][output] not fetched from lambda"})
+        # else:
+        #     logger.error(f"{unique_id}: response[body] not fetched from lambda")
+        #     return JSONResponse(status_code=501, content={"message": "response[body] not fetched from lambda"})  
+        
+        answer = response["body"]["output"]["answer"] 
         cal_desc = response["body"]["output"]["calculation_description"]
         up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer=answer,
                                                         calculationDescription=cal_desc)

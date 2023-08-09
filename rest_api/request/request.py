@@ -45,7 +45,7 @@ class DataSurvey(BaseModel):
     surveyId: str
 
 class Model(BaseModel):
-    temperature : int
+    temperature : float
     outputTokenLength : int
 
 class Option(BaseModel):

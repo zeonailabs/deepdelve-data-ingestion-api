@@ -183,6 +183,9 @@ async def search_survey(response: Response, org: OrganizationSearch,
     question = org.question
     filters_str = org.filters
     model_parameters = org.modelParameters
+    if model_parameters.temperature>0.5:
+        logger.error(f"{unique_id}: temperature should not be greater than 0.5")
+        return JSONResponse(status_code=400, content={"message": "temperature should not be greater than 0.5"})
     survey = org.surveyList
     surveyList = []
     for surv in survey:

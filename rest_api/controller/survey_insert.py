@@ -358,7 +358,7 @@ def get_keys(survey: Survey):
     key_list = []
     surv_data_data = survey_data[0].Data
     for s_data in surv_data_data:
-        key_list.append(str(s_data.key))  # entity
+        key_list.append(str(s_data.key).replace("\n", " "))  # entity
     data["keys"] = sorted(key_list)
     return data
 
@@ -426,8 +426,8 @@ def add_csv_to_s3(org_id: str, survey: Survey):
         data["Id"] = surv_data_id
         surv_data_data = surv_data.Data
         for s_data in surv_data_data:
-            surv_data_key = s_data.key
-            surv_data_value = s_data.value
+            surv_data_key = s_data.key.replace("\n", " ")
+            surv_data_value = s_data.value.lower()
             data[surv_data_key] = surv_data_value
         survey_df_list.append(data)
 

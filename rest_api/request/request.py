@@ -20,13 +20,13 @@ class MetaData(BaseModel):
 
 
 class Data(BaseModel):
-    key: str
-    value: str
+    key: Optional[str]
+    value: Optional[str]
 
 
 class SurveyData(BaseModel):
     Id: str
-    Data: List[Data]
+    Data: Optional[List[Data]]
 
 
 class Survey(BaseModel):

@@ -48,9 +48,8 @@ async def submit_survey(response: Response, org: Organization,
     success_surv = []
     failed_surv = []
     for survey in org.surveyList:
-        no_of_rows = len(survey.surveyData)
+        meta_list, surv_dict, survey_present, no_of_rows = add_csv_to_s3(org_id=org_id, survey=survey)
         print(no_of_rows)
-        meta_list, surv_dict, survey_present = add_csv_to_s3(org_id=org_id, survey=survey)
         print(meta_list)
         print(surv_dict)
         print(survey_present)

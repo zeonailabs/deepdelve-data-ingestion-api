@@ -420,16 +420,25 @@ def add_csv_to_s3(org_id: str, survey: Survey):
         meta_list.append(meta_dict)
     # store survey in s3
     survey_data = survey.surveyData
+    no_of_rows = 0
     for surv_data in survey_data:
         data = {}
         surv_data_id = surv_data.Id
         data["Id"] = surv_data_id
         surv_data_data = surv_data.Data
+        if not surv_data_data:
+            continue
         for s_data in surv_data_data:
+            if not s_data:
+                continue
+            if not s_data.key:
+                continue
             surv_data_key = s_data.key.replace("\n", " ")
             surv_data_value = s_data.value.lower()
             data[surv_data_key] = surv_data_value
-        survey_df_list.append(data)
+        if len(data)>1:
+            no_of_rows += 1
+            survey_df_list.append(data)
 
     survey_df = pd.DataFrame(survey_df_list)
     csv_file_path = csv_path + csv_file
@@ -442,11 +451,11 @@ def add_csv_to_s3(org_id: str, survey: Survey):
                 write_json_to_s3(json_file_path=json_file_path, json_object=json_keys)
                 surv_dict = {"orgId": org_id, "surveyId": survey_id, "surveyDescription": survey_description,
                              "survey_s3_file_path": s3_path}
-                return meta_list, surv_dict, False
+                return meta_list, surv_dict, False, no_of_rows
             else:
-                return None, None, True
+                return None, None, True, no_of_rows
         else:
-            return None, None, False
+            return None, None, False, 0
     except Exception as e:
         logger.error(f"{survey_id}: storing in s3 failed : {e}")
-        return None, None, None
+        return None, None, None, 0

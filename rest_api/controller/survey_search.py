@@ -324,6 +324,7 @@ def get_filtered_lists(filters: str):
 def get_all_survey(db: Session, org_id: str, filters):
     """
 
+    :param org_id:
     :param req_id:
     :param db:
     :param meta_key:

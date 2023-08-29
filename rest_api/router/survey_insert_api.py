@@ -182,7 +182,7 @@ async def search_survey(response: Response, org: OrganizationSearch,
     question = org.question
     filters_str = org.filters
     model_parameters = org.modelParameters
-    if model_parameters.temperature>0.5:
+    if model_parameters.temperature > 0.5:
         logger.error(f"{unique_id}: temperature should not be greater than 0.5")
         return JSONResponse(status_code=400, content={"message": "temperature should not be greater than 0.5"})
     survey = org.surveyList
@@ -195,7 +195,8 @@ async def search_survey(response: Response, org: OrganizationSearch,
             logger.error(f"{unique_id}: Null filters in search request")
             return JSONResponse(status_code=400, content={"message": "Empty filters and survey_list in payload"})
         elif surveyList:
-            surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db = db , org_id = org_id, filters = None, surveyList = surveyList)
+            surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db=db, org_id=org_id, filters=None,
+                                                                                    surveyList=surveyList)
             # print(surveyIdListDict, surveyIdList, surveys3List)
     elif filters_str:
         filters = get_filtered_lists(filters_str)
@@ -203,11 +204,13 @@ async def search_survey(response: Response, org: OrganizationSearch,
             logger.error(f"{unique_id}: filters not processed successfully")
             return JSONResponse(status_code=501, content={"message": "filters not processed successfully"})
         if not surveyList:
-            surveyIdListDict, surveyIdList, surveys3List = get_all_survey(db = db, org_id = org_id, filters = filters)
-        
+            surveyIdListDict, surveyIdList, surveys3List = get_all_survey(db=db, org_id=org_id, filters=filters)
+
         else:
-            surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db = db , org_id = org_id, filters = filters, surveyList = surveyList)
-    
+            surveyIdListDict, surveyIdList, surveys3List = check_survey_for_filters(db=db, org_id=org_id,
+                                                                                    filters=filters,
+                                                                                    surveyList=surveyList)
+
     if surveys3List:
         req_id = create_search_insert_request(db=db, searchId=unique_id, orgId=org_id, question=question,
                                               answer="collecting answer", inputSurveyIdList=str(surveyList),
@@ -222,12 +225,13 @@ async def search_survey(response: Response, org: OrganizationSearch,
         response = predict_with_lambda(event=test_event)
         print(response)
         if not response:
-            up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer="answer not found",
-                                                        calculationDescription="calculation description not found")
+            up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id,
+                                                            answer="answer not found",
+                                                            calculationDescription="calculation description not found")
             logger.error(f"{unique_id}: response not fetched from lambda")
             return JSONResponse(status_code=501, content={"message": "response not fetched from lambda"})
-        
-        #code sippet for older output
+
+        # code sippet for older output
         # if response["body"]:
         #     if response["body"]["output"] and type(response["body"]["output"]) != str :
         #         if response["body"]["output"]["answer"]:
@@ -244,8 +248,8 @@ async def search_survey(response: Response, org: OrganizationSearch,
         # else:
         #     logger.error(f"{unique_id}: response[body] not fetched from lambda")
         #     return JSONResponse(status_code=501, content={"message": "response[body] not fetched from lambda"})  
-        
-        answer = response["body"]["output"]["answer"] 
+
+        answer = response["body"]["output"]["answer"]
         cal_desc = response["body"]["output"]["calculation_description"]
         up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer=answer,
                                                         calculationDescription=cal_desc)

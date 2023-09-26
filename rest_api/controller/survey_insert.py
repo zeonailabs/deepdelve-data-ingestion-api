@@ -282,6 +282,9 @@ def check_if_meta_exist(db: Session, org_id: str, org: Organization):
     for survey in surveyList:
         survey_id = survey.surveyId
         req_id = get_id_for_survey(db=db, org_id=org_id, survey_id=survey_id)
+        if not req_id:
+            logger.error(f"{survey_id}: survey_id is not found")
+            print(f"{survey_id}: survey_id is not found")
         # store meta in dictionary
         meta_data = survey.metaData
         for m in meta_data:

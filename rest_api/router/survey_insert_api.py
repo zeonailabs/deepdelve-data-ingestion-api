@@ -38,6 +38,10 @@ async def submit_survey(response: Response, org: Organization,
 
     total_data_points = 0
     for survlst in org.surveyList:
+        if survlst.surveyId == None or survlst.metaData == None or survlst.surveyData ==None:
+            logger.error(f"{unique_id}: Null surveyId/metaData/surveyData in the request")
+            return JSONResponse(status_code=400, content={"message": "Empty surveyId/metaData/surveyData in payload"})
+
         total_data_points += len(survlst.surveyData)
     if total_data_points > SUPPORTED_DATA_SIZE:
         logger.error(f"{unique_id}: Input Request too long")
@@ -258,9 +262,9 @@ async def search_survey(response: Response, org: OrganizationSearch,
                 "answer": answer or "", "surveyList": surveyIdListDict}
 
     else:
-        logger.error(f" no survey found for this filter: {filters}")
+        logger.error(f" no survey found: {filters_str}")
         return JSONResponse(status_code=501,
-                            content={"message": "no survey found for this filter, filters search Unsuccessful"})
+                            content={"message": "no survey found, search Unsuccessful"})
 
 
 @router.post("/" + VERSION + "/deepdelve/survey/status", response_model=StatusAPIResponse,

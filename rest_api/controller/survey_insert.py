@@ -413,7 +413,7 @@ def add_csv_to_s3(org_id: str, survey: Survey):
     if data_keys:
         if data_keys != json_keys:
             logger.error(f"{survey_id}: Survey_id already exists for the org_id and keys are not same")
-            return None, None, None
+            return None, None, None, None
 
     survey_description = survey.surveyDescription  # entity
     # store meta in dictionary

@@ -33,6 +33,7 @@ class Survey(BaseModel):
     surveyId: str
     metaData: List[MetaData]
     surveyDescription: str
+    questionList : List[str]
     surveyData: List[SurveyData]
 
 

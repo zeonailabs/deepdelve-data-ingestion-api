@@ -187,7 +187,7 @@ def get_filtered_lists(filters: str):
             for filter_dict in filter_dict_filt.get('|', []):
                 filt = []
                 column_name = filter_dict['key']
-                if filter_dict.get('value') != None:
+                if filter_dict.get('value') is not None:
                     value = filter_dict['value']
                 dtype = filter_dict['dtype']
                 # print(column_name, " ", dtype)
@@ -231,7 +231,7 @@ def get_filtered_lists(filters: str):
             for filter_dict in filter_dict_filt.get('!', []):
                 filt = []
                 column_name = filter_dict['key']
-                if filter_dict.get('value') != None:
+                if filter_dict.get('value') is not None:
                     value = filter_dict['value']
                 dtype = filter_dict['dtype']
                 # print(column_name, " ", dtype)

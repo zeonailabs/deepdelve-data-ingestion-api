@@ -1,7 +1,8 @@
 from rest_api.config import LOG_LEVEL
 from rest_api.request.request import Organization, Survey
 from rest_api.db.models.survey_insert_request import SurveyInsertRequest, SurveyMetaInsertRequest
-from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, SurvSearchInsReqCreate, SurvFeedInsReqCreate, SurvMetaUpReqCreate, SurvSearchUpReqCreate
+from rest_api.db.schemas.survey_insert_request import SurvInsReqCreate, SurvMetaInsReqCreate, SurvUpReqCreate, \
+    SurvSearchInsReqCreate, SurvFeedInsReqCreate, SurvMetaUpReqCreate, SurvSearchUpReqCreate
 from rest_api.controller.utils import write_files_to_s3, delete_folder_from_s3, prefix_exists, write_json_to_s3
 import logging
 import pandas as pd
@@ -48,6 +49,7 @@ def get_id_for_survey(db: Session, org_id: str, survey_id: str):
     else:
         return None
 
+
 def check_if_search_id_exists(db: Session, search_id: str):
     """
 
@@ -56,11 +58,12 @@ def check_if_search_id_exists(db: Session, search_id: str):
     :param survey_id:
     :return: db_id if present
     """
-    Id = crud.survey_search_insert_request.get_search(db=db, search_id= search_id)
+    Id = crud.survey_search_insert_request.get_search(db=db, search_id=search_id)
     if Id:
         return Id
     else:
         return None
+
 
 def get_s3_for_survey(db, org_id: str, survey_id: str):
     """
@@ -76,7 +79,8 @@ def get_s3_for_survey(db, org_id: str, survey_id: str):
     else:
         return None
 
-def get_meta(db:Session, req_id: int):
+
+def get_meta(db: Session, req_id: int):
     """
 
     :param req_id:
@@ -89,7 +93,8 @@ def get_meta(db:Session, req_id: int):
         return dbj
     else:
         return None
-    
+
+
 def check_if_meta_of_survey_id_exist(db, req_id: int, meta_key: str):
     """
 
@@ -106,7 +111,7 @@ def check_if_meta_of_survey_id_exist(db, req_id: int, meta_key: str):
 
 
 def create_survey_insert_request(db: Session, org_id: str, survey_id: str, survey_description: str = None,
-                                 file_path: str = None , total_no_of_rows: int = 0):
+                                 file_path: str = None, total_no_of_rows: int = 0):
     """
 
     :param survey_description:
@@ -118,15 +123,17 @@ def create_survey_insert_request(db: Session, org_id: str, survey_id: str, surve
     :return:
     """
     create_object = SurvInsReqCreate(orgId=org_id, surveyId=survey_id, surveyDescription=survey_description,
-                                     s3_file_path=file_path, total_no_of_rows = total_no_of_rows)
+                                     s3_file_path=file_path, total_no_of_rows=total_no_of_rows)
     try:
         survey_ins_req = crud.survey_insert_request.create(db=db, obj_in=create_object)
         return survey_ins_req.id
     except Exception as e:
         logger.error(f"{survey_id}: storing in db failed : {e}")
         return None
-    
-def create_survey_feedback_insert_request(db: Session, searchId :str, searchReqId : int, feedback: str, option: str, remarks : str):
+
+
+def create_survey_feedback_insert_request(db: Session, searchId: str, searchReqId: int, feedback: str, option: str,
+                                          remarks: str):
     """
 
     :param survey_description:
@@ -137,7 +144,8 @@ def create_survey_feedback_insert_request(db: Session, searchId :str, searchReqI
     :param db:
     :return:
     """
-    create_object = SurvFeedInsReqCreate(db =db, searchId = searchId, searchReqId = searchReqId, feedback = feedback, option = option, remarks = remarks)
+    create_object = SurvFeedInsReqCreate(db=db, searchId=searchId, searchReqId=searchReqId, feedback=feedback,
+                                         option=option, remarks=remarks)
     try:
         survey_feed_ins_req = crud.survey_feedback_insert_request.create(db=db, obj_in=create_object)
         return survey_feed_ins_req.id
@@ -145,7 +153,8 @@ def create_survey_feedback_insert_request(db: Session, searchId :str, searchReqI
         logger.error(f"{searchId}: storing in db failed : {e}")
         return None
 
-def create_survey_update_request(db: Session, org_id: str, survey_id: str,  total_no_of_rows: int = 0):
+
+def create_survey_update_request(db: Session, org_id: str, survey_id: str, total_no_of_rows: int = 0):
     """
 
     :param survey_id:
@@ -153,18 +162,20 @@ def create_survey_update_request(db: Session, org_id: str, survey_id: str,  tota
     :param db:
     :return:
     """
-    db_obj = crud.survey_update_request.get(db=db, org_id= org_id , survey_id= survey_id)
-    update_object = SurvUpReqCreate(total_no_of_rows = total_no_of_rows)
+    db_obj = crud.survey_update_request.get(db=db, org_id=org_id, survey_id=survey_id)
+    update_object = SurvUpReqCreate(total_no_of_rows=total_no_of_rows)
     try:
-        survey_up_req = crud.survey_update_request.update(db=db, db_obj= db_obj, obj_in=update_object)
+        survey_up_req = crud.survey_update_request.update(db=db, db_obj=db_obj, obj_in=update_object)
         return survey_up_req.id
     except Exception as e:
         logger.error(f"{survey_id}: storing in db failed : {e}")
         return None
 
-def create_search_insert_request(db: Session, searchId : str, orgId: str, question: str, answer: Optional[str],
-                                  inputSurveyIdList : Optional[str], filters : Optional[str], filteredSurveyIdList: Optional[str], 
-                                  modelParameter : Optional[str], calculationDescription: Optional[str]):
+
+def create_search_insert_request(db: Session, searchId: str, orgId: str, question: str, answer: Optional[str],
+                                 inputSurveyIdList: Optional[str], filters: Optional[str],
+                                 filteredSurveyIdList: Optional[str],
+                                 modelParameter: Optional[str], calculationDescription: Optional[str]):
     """
 
     :param question:
@@ -179,9 +190,10 @@ def create_search_insert_request(db: Session, searchId : str, orgId: str, questi
     :param db:
     :return:
     """
-    create_object = SurvSearchInsReqCreate(searchId= searchId, orgId=orgId, question = question, answer = answer ,
-                                           inputSurveyIdList = inputSurveyIdList, filters = filters,
-                                           filteredSurveyIdList = filteredSurveyIdList, modelParameter = modelParameter, calculationDescription = calculationDescription)
+    create_object = SurvSearchInsReqCreate(searchId=searchId, orgId=orgId, question=question, answer=answer,
+                                           inputSurveyIdList=inputSurveyIdList, filters=filters,
+                                           filteredSurveyIdList=filteredSurveyIdList, modelParameter=modelParameter,
+                                           calculationDescription=calculationDescription)
     try:
         survey_search_ins_req = crud.survey_search_insert_request.create(db=db, obj_in=create_object)
         return survey_search_ins_req.id
@@ -189,7 +201,9 @@ def create_search_insert_request(db: Session, searchId : str, orgId: str, questi
         logger.error(f"{searchId}: storing in db failed : {e}")
         return None
 
-def create_survey_search_update_request(db: Session, id,  searchId: str, answer: Optional[str], calculationDescription: Optional[str]):
+
+def create_survey_search_update_request(db: Session, id, searchId: str, answer: Optional[str],
+                                        calculationDescription: Optional[str]):
     """
 
     :param answer:
@@ -198,9 +212,9 @@ def create_survey_search_update_request(db: Session, id,  searchId: str, answer:
     :param db:
     :return:
     """
-    db_obj = crud.survey_search_update_request.get_by_id(db=db, id = id)
+    db_obj = crud.survey_search_update_request.get_by_id(db=db, id=id)
     # db_obj = crud.survey_meta_update_request.get(db=db, org_id=org_id, survey_id= survey_id, meta_key= meta_key)
-    update_object = SurvSearchUpReqCreate(answer = answer, calculationDescription = calculationDescription)
+    update_object = SurvSearchUpReqCreate(answer=answer, calculationDescription=calculationDescription)
     try:
         survey_search_up_req = crud.survey_search_update_request.update(db=db, db_obj=db_obj, obj_in=update_object)
         return survey_search_up_req.id
@@ -350,6 +364,7 @@ def delete_survey_from_s3(s3_list):
             logging.error(f"s3 folder failed to delete : {s3_path}")
     return failed_s3
 
+
 def get_keys(survey: Survey):
     """
 
@@ -364,19 +379,19 @@ def get_keys(survey: Survey):
     else:
         return None
 
-def get_status(db: Session, org_id: str, survey_id:str, db_object:SurveyInsertRequest):
 
+def get_status(db: Session, org_id: str, survey_id: str, db_object: SurveyInsertRequest):
     status = {}
     json_file = "survey_data_" + org_id + "_" + survey_id + "_keys.json"
     csv_path = "survey_data/" + org_id + "/" + survey_id + "/"
     json_file_path = csv_path + json_file
     req_id = db_object.id
     meta_list = []
-    all_meta = get_meta(db= db, req_id= req_id) #: List[SurveyMetaInsertRequest]
+    all_meta = get_meta(db=db, req_id=req_id)  #: List[SurveyMetaInsertRequest]
     # print(all_meta)
     if all_meta:
         for obj in all_meta:
-            meta_list.append({"metaKey" : obj.metaKey, "value" : obj.metaValue})
+            meta_list.append({"metaKey": obj.metaKey, "value": obj.metaValue})
 
         status["numberDataItems"] = db_object.total_no_of_rows
         status.update(prefix_exists(json_file_path))
@@ -443,7 +458,7 @@ def add_csv_to_s3(org_id: str, survey: Survey):
             surv_data_key = s_data.key.replace("\n", " ")
             surv_data_value = s_data.value.lower()
             data[surv_data_key] = surv_data_value
-        if len(data)>1:
+        if len(data) > 1:
             no_of_rows += 1
             survey_df_list.append(data)
 

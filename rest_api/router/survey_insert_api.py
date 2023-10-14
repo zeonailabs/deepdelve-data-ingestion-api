@@ -38,7 +38,11 @@ async def submit_survey(response: Response, org: Organization,
 
     total_data_points = 0
     for survlst in org.surveyList:
+<<<<<<< HEAD
         if survlst.surveyId == None or survlst.metaData == None or survlst.surveyData ==None or survlst.questionList == None:
+=======
+        if survlst.surveyId is None or survlst.metaData is None or survlst.surveyData is None:
+>>>>>>> 0e34bb5 (cosmetic changes)
             logger.error(f"{unique_id}: Null surveyId/metaData/surveyData in the request")
             return JSONResponse(status_code=400, content={"message": "Empty surveyId/metaData/surveyData in payload"})
 

@@ -357,13 +357,12 @@ def get_keys(survey: Survey):
     :return:
     """
     data = {}
-    survey_data = survey.surveyData
-    key_list = []
-    surv_data_data = survey_data[0].Data
-    for s_data in surv_data_data:
-        key_list.append(str(s_data.key).replace("\n", " "))  # entity
-    data["keys"] = sorted(key_list)
-    return data
+    survey_ques = survey.questionList
+    if survey_ques:
+        data["keys"] = survey_ques
+        return data
+    else:
+        return None
 
 def get_status(db: Session, org_id: str, survey_id:str, db_object:SurveyInsertRequest):
 
@@ -408,12 +407,15 @@ def add_csv_to_s3(org_id: str, survey: Survey):
 
     # check if data_keys file exists in s3
     data_keys = prefix_exists(json_file_path)
+    # if not data_keys:
+    #     data_keys = get_keys(survey=survey)
     json_keys = get_keys(survey=survey)
-    # print(data_keys, json_keys)
+    print(data_keys, json_keys)
     if data_keys:
-        if data_keys != json_keys:
-            logger.error(f"{survey_id}: Survey_id already exists for the org_id and keys are not same")
-            return None, None, None, None
+        if sorted(data_keys["keys"]) != sorted(json_keys["keys"]):
+            msg = f"{survey_id}: Survey_id already exists for the org_id and keys/questions are not same"
+            logger.error(msg)
+            return None, None, None, None, msg
 
     survey_description = survey.surveyDescription  # entity
     # store meta in dictionary
@@ -426,6 +428,8 @@ def add_csv_to_s3(org_id: str, survey: Survey):
     no_of_rows = 0
     for surv_data in survey_data:
         data = {}
+        for k in json_keys["keys"]:
+            data[k] = ""
         surv_data_id = surv_data.Id
         data["Id"] = surv_data_id
         surv_data_data = surv_data.Data
@@ -454,11 +458,13 @@ def add_csv_to_s3(org_id: str, survey: Survey):
                 write_json_to_s3(json_file_path=json_file_path, json_object=json_keys)
                 surv_dict = {"orgId": org_id, "surveyId": survey_id, "surveyDescription": survey_description,
                              "survey_s3_file_path": s3_path}
-                return meta_list, surv_dict, False, no_of_rows
+                return meta_list, surv_dict, False, no_of_rows, None
             else:
-                return None, None, True, no_of_rows
+                return None, None, True, no_of_rows,None
         else:
-            return None, None, False, 0
+            msg = f"{survey_id}: storing in s3 failed"
+            return None, None, False, 0, msg
     except Exception as e:
+        msg = f"{survey_id}: storing in s3 failed : {e}"
         logger.error(f"{survey_id}: storing in s3 failed : {e}")
-        return None, None, None, 0
+        return None, None, None, 0, msg

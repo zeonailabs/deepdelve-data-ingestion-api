@@ -38,7 +38,7 @@ async def submit_survey(response: Response, org: Organization,
 
     total_data_points = 0
     for survlst in org.surveyList:
-        if survlst.surveyId == None or survlst.metaData == None or survlst.surveyData ==None:
+        if survlst.surveyId == None or survlst.metaData == None or survlst.surveyData ==None or survlst.questionList == None:
             logger.error(f"{unique_id}: Null surveyId/metaData/surveyData in the request")
             return JSONResponse(status_code=400, content={"message": "Empty surveyId/metaData/surveyData in payload"})
 
@@ -52,7 +52,7 @@ async def submit_survey(response: Response, org: Organization,
     success_surv = []
     failed_surv = []
     for survey in org.surveyList:
-        meta_list, surv_dict, survey_present, no_of_rows = add_csv_to_s3(org_id=org_id, survey=survey)
+        meta_list, surv_dict, survey_present, no_of_rows, msg = add_csv_to_s3(org_id=org_id, survey=survey)
         print(no_of_rows)
         print(meta_list)
         print(surv_dict)
@@ -85,9 +85,9 @@ async def submit_survey(response: Response, org: Organization,
                     return JSONResponse(status_code=501, content={"message": "survey update failed"})
                 success_surv.append({"id": survey.surveyId})
             else:
-                failed_surv.append({"id": survey.surveyId})
+                failed_surv.append({"id": survey.surveyId, "error": msg})
         else:
-            failed_surv.append({"id": survey.surveyId})
+            failed_surv.append({"id": survey.surveyId, "error": msg})
 
     return {"status": {"success": True, "code": 200}, "message": "Request successfully received",
             "successSurveyIds": success_surv, "failedSurveyIds": failed_surv}

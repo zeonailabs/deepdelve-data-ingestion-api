@@ -455,6 +455,10 @@ def add_csv_to_s3(org_id: str, survey: Survey):
                 continue
             if not s_data.key:
                 continue
+            if s_data.key not in json_keys["keys"]:
+                msg = f"{survey_id}: some keys doesnot match with questionList"
+                logger.error(msg)
+                return None, None, None, None, msg
             surv_data_key = s_data.key.replace("\n", " ")
             surv_data_value = s_data.value.lower()
             data[surv_data_key] = surv_data_value

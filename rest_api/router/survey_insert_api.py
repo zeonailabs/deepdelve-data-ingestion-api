@@ -38,13 +38,9 @@ async def submit_survey(response: Response, org: Organization,
 
     total_data_points = 0
     for survlst in org.surveyList:
-<<<<<<< HEAD
-        if survlst.surveyId == None or survlst.metaData == None or survlst.surveyData ==None or survlst.questionList == None:
-=======
-        if survlst.surveyId is None or survlst.metaData is None or survlst.surveyData is None:
->>>>>>> 0e34bb5 (cosmetic changes)
-            logger.error(f"{unique_id}: Null surveyId/metaData/surveyData in the request")
-            return JSONResponse(status_code=400, content={"message": "Empty surveyId/metaData/surveyData in payload"})
+        if not survlst.surveyId or not survlst.metaData or not survlst.surveyData or not survlst.questionList:
+            logger.error(f"{unique_id}: Null surveyId/metaData/surveyData/questionList in the request")
+            return JSONResponse(status_code=400, content={"message": "Empty surveyId/metaData/surveyData/questionList in payload"})
 
         total_data_points += len(survlst.surveyData)
     if total_data_points > SUPPORTED_DATA_SIZE:
@@ -109,6 +105,11 @@ async def update_surveymeta(response: Response, org: OrganizationMeta,
     if not org:
         logger.error(f"{unique_id}: Null update request")
         return JSONResponse(status_code=400, content={"message": "Empty payload"})
+    
+    for survlst in org.surveyList:
+        if not survlst.surveyId or not survlst.metaData:
+            logger.error(f"{unique_id}: Null surveyId/metaData in the request")
+            return JSONResponse(status_code=400, content={"message": "Empty surveyId/metaData in payload"})
 
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
@@ -149,6 +150,12 @@ async def delete_survey(response: Response, org: OrganizationSurvey,
     if not org:
         logger.error(f"{unique_id}: Null delete request")
         return JSONResponse(status_code=400, content={"message": "Empty payload"})
+    
+    for survlst in org.surveyList:
+        if not survlst.surveyId:
+            logger.error(f"{unique_id}: Null surveyId in the request")
+            return JSONResponse(status_code=400, content={"message": "Empty surveyId in payload"})
+
 
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
@@ -184,6 +191,13 @@ async def search_survey(response: Response, org: OrganizationSearch,
     if not org:
         logger.error(f"{unique_id}: Null search request")
         return JSONResponse(status_code=400, content={"message": "Empty payload"})
+    if not org.question:
+        logger.error(f"{unique_id}: Null question in the request")
+        return JSONResponse(status_code=400, content={"message": "Empty question in payload"})
+    for survlst in org.surveyList:
+        if not survlst.surveyId :
+            logger.error(f"{unique_id}: Null surveyId in the request")
+            return JSONResponse(status_code=400, content={"message": "Empty surveyId in payload"})
 
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
@@ -283,6 +297,9 @@ async def survey_status(response: Response, org: OrganizationStatus,
     if not org:
         logger.error(f"{unique_id}: Null delete request")
         return JSONResponse(status_code=400, content={"message": "Empty payload"})
+    if not org.surveyId:
+        logger.error(f"{unique_id}: Null surveyId in the request")
+        return JSONResponse(status_code=400, content={"message": "Empty surveyId in payload"})
 
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id
@@ -317,6 +334,9 @@ async def survey_feedback(response: Response, org: OrganizationFeedback,
     if not org:
         logger.error(f"{unique_id}: Null delete request")
         return JSONResponse(status_code=400, content={"message": "Empty payload"})
+    if not org.searchId or not org.feedback:
+        logger.error(f"{unique_id}: Null searchId/feedback in the request")
+        return JSONResponse(status_code=400, content={"message": "Empty searchId/feedback/surveyData/questionList in payload"})
 
     response.headers["X-ZAI-REQUEST-ID"] = unique_id
     response.headers["X-ZAI-ORG-ID"] = org_id

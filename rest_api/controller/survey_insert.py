@@ -441,12 +441,13 @@ def add_csv_to_s3(org_id: str, survey: Survey):
     # store survey in s3
     survey_data = survey.surveyData
     no_of_rows = 0
+    msg = []
     for surv_data in survey_data:
         data = {}
         for k in json_keys["keys"]:
             data[k] = ""
         surv_data_id = surv_data.Id
-        data["Id"] = surv_data_id
+        # data["Id"] = surv_data_id
         surv_data_data = surv_data.Data
         if not surv_data_data:
             continue
@@ -456,16 +457,25 @@ def add_csv_to_s3(org_id: str, survey: Survey):
             if not s_data.key:
                 continue
             if s_data.key not in json_keys["keys"]:
-                msg = f"{survey_id}: some keys doesnot match with questionList"
-                logger.error(msg)
-                return None, None, None, None, msg
+                temp_msg = f" {survey_id} : {surv_data_id} :- some keys doesnot match with questionList"
+                logger.error(temp_msg)
+                # print(temp_msg)
+                msg.append(temp_msg)
+                break
+                # return None, None, None, None, msg
             surv_data_key = s_data.key
             surv_data_value = s_data.value.lower()
             data[surv_data_key] = surv_data_value
-        if len(data) > 1:
+        if any(data.values()):
             no_of_rows += 1
+            data["Id"] = surv_data_id
             survey_df_list.append(data)
-
+    if len(survey_df_list)==0:
+        temp_msg = f" {survey_id} :- no rows /data found to insert after processing data"
+        logger.error(temp_msg)
+        # print(msg)
+        msg.append(temp_msg)
+        return None, None, None, None, msg
     survey_df = pd.DataFrame(survey_df_list)
     csv_file_path = csv_path + csv_file
     csv_buffer = StringIO()
@@ -477,9 +487,9 @@ def add_csv_to_s3(org_id: str, survey: Survey):
                 write_json_to_s3(json_file_path=json_file_path, json_object=json_keys)
                 surv_dict = {"orgId": org_id, "surveyId": survey_id, "surveyDescription": survey_description,
                              "survey_s3_file_path": s3_path}
-                return meta_list, surv_dict, False, no_of_rows, None
+                return meta_list, surv_dict, False, no_of_rows, msg
             else:
-                return None, None, True, no_of_rows,None
+                return None, None, True, no_of_rows, msg
         else:
             msg = f"{survey_id}: storing in s3 failed"
             return None, None, False, 0, msg

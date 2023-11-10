@@ -13,7 +13,7 @@ logging.getLogger("elasticsearch").setLevel(logging.WARNING)
 
 
 def get_application() -> FastAPI:
-    application = FastAPI(title="ZeonAI-API", debug=True, version="1.0")
+    application = FastAPI(title="ZeonAI-API", debug=True, version="1.0", openapi_prefix='/prod/')
 
     origins = [
         "*",
@@ -49,5 +49,5 @@ handler = Mangum(app, lifespan="off")
 
 #logger.info("Open http://127.0.0.1:8000/docs to see Swagger API Documentation.")
 
-if __name__ == "__main__":
-   uvicorn.run(app, host="0.0.0.0", port=8000)
+#if __name__ == "__main__":
+#    uvicorn.run(app, host="0.0.0.0", port=8000)

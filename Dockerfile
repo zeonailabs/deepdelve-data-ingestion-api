@@ -69,3 +69,7 @@ COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
 CMD [ "rest_api.application.handler" ]
+
+#EXPOSE 8000
+# cmd for running the API
+#CMD ["gunicorn", "rest_api.application:app",  "-b", "0.0.0.0", "-k", "uvicorn.workers.UvicornWorker", "--workers", "1", "--timeout", "2000"]

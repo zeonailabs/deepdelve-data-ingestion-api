@@ -12,7 +12,7 @@ logging.getLogger("elasticsearch").setLevel(logging.WARNING)
 
 
 def get_application() -> FastAPI:
-    application = FastAPI(title="ZeonAI-API", debug=True, version="1.0")
+    application = FastAPI(title="ZeonAI-API", debug=True, version="1.0", openapi_prefix='/prod/')
 
     origins = [
         "*",

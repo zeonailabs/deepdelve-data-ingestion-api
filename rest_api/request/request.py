@@ -47,7 +47,7 @@ class DataSurvey(BaseModel):
 
 class Model(BaseModel):
     temperature : float
-    outputTokenLength : int
+    outputTokenLength : int = 400
 
 class Option(BaseModel):
     option : str

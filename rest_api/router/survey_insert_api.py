@@ -188,6 +188,7 @@ async def search_survey(response: Response, org: OrganizationSearch,
     unique_id = str(uuid4())
     org_id = current_user.org_id  # entity
     # org_id = "1001" # entity
+    keys = ["agent stopped", "iteration limit", "maximum iteration", "retry after", "maximum tokens", "i do not have required information" ]
     if not org:
         logger.error(f"{unique_id}: Null search request")
         return JSONResponse(status_code=400, content={"message": "Empty payload"})
@@ -270,14 +271,33 @@ async def search_survey(response: Response, org: OrganizationSearch,
         # else:
         #     logger.error(f"{unique_id}: response[body] not fetched from lambda")
         #     return JSONResponse(status_code=501, content={"message": "response[body] not fetched from lambda"})  
+        if response["statusCode"]==200:
+            answer = response["body"]["output"]["answer"]
+            if any(key in answer.lower() for key in keys) :
+                up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id,
+                                                            answer="answer not found",
+                                                            calculationDescription="calculation description not found")
+                logger.error(f"{unique_id}: Answer could not be fetched! Please try again after rephrasing the query!")
+                return JSONResponse(status_code=404, content={"message": "Answer could not be fetched! Please try again after rephrasing the query!"})
+            cal_desc = response["body"]["output"]["calculation_description"]
+            up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer=answer,
+                                                            calculationDescription=cal_desc)
+            return {"status": {"success": True, "code": 200},
+                    "message": "Request successfully received, search successfully done",
+                    "answer": answer or "", "surveyList": surveyIdListDict}
+        if response["statusCode"]==404:
+            up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id,
+                                                            answer="answer not found",
+                                                            calculationDescription="calculation description not found")
+            logger.error(f"{unique_id}: Answer could not be fetched! Please try again")
+            return JSONResponse(status_code=404, content={"message": "Answer could not be fetched! Please try again"})
+        else:
+            up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id,
+                                                            answer="answer not found",
+                                                            calculationDescription="calculation description not found")
+            logger.error(f"{unique_id}: response not fetched from lambda")
+            return JSONResponse(status_code=501, content={"message": "response not fetched from lambda"})
 
-        answer = response["body"]["output"]["answer"]
-        cal_desc = response["body"]["output"]["calculation_description"]
-        up_req_id = create_survey_search_update_request(db=db, id=req_id, searchId=unique_id, answer=answer,
-                                                        calculationDescription=cal_desc)
-        return {"status": {"success": True, "code": 200},
-                "message": "Request successfully received, search successfully done",
-                "answer": answer or "", "surveyList": surveyIdListDict}
 
     else:
         logger.error(f" no survey found: {filters_str}")
